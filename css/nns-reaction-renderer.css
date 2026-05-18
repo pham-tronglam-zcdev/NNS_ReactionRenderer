@@ -1,0 +1,220 @@
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --fg: #1a1a1a;
+  --muted: #666;
+  --line: #d8d8d8;
+  --accent: #005bbb;
+  --error: #b00020;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1e1f22;
+    --fg: #efefef;
+    --muted: #aaaaaa;
+    --line: #444;
+    --accent: #6ca8ff;
+    --error: #ff6b81;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.wrap {
+  max-width: 980px;
+  margin: 1.25rem auto;
+  padding: 0 1rem 1rem;
+  position: relative;
+}
+
+h1 {
+  font-size: 1.2rem;
+  margin: 0 0 0.8rem;
+}
+
+.hint {
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+.status {
+  font-size: 1.05rem;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  margin: 0.3rem auto 0.8rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: block;
+  width: fit-content;
+  text-align: center;
+  background: color-mix(in srgb, var(--bg) 82%, var(--line) 18%);
+}
+
+.status.up-to-date {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--line) 65%);
+  animation: pulse-soft 2.4s ease-in-out infinite;
+}
+
+.status.out-of-date {
+  color: #a05a00;
+  border-color: color-mix(in srgb, #a05a00 35%, var(--line) 65%);
+  animation: pulse-alert 1.1s ease-in-out infinite;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.72; }
+}
+
+@keyframes pulse-alert {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.editor {
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: transparent;
+}
+
+.line-numbers {
+  margin: 0;
+  padding: 0.75rem 0.5rem 0.75rem 0.25rem;
+  font: 14px/1.5 Consolas, Menlo, Monaco, monospace;
+  height: calc(20 * 1.5em + 1.5rem);
+  max-height: calc(20 * 1.5em + 1.5rem);
+  text-align: right;
+  color: var(--muted);
+  border-right: 1px solid var(--line);
+  user-select: none;
+  white-space: pre;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+.line-numbers::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+textarea {
+  width: 100%;
+  min-height: 120px;
+  height: calc(20 * 1.5em + 1.5rem);
+  max-height: calc(20 * 1.5em + 1.5rem);
+  box-sizing: border-box;
+  font: 14px/1.5 Consolas, Menlo, Monaco, monospace;
+  padding: 0.75rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  resize: none;
+  overflow-y: auto;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0.75rem 0;
+}
+
+.row--compact {
+  margin-top: 0;
+}
+
+.hint--small {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+}
+
+.nested-root-row {
+  display: none;
+  margin-top: 0;
+}
+
+button {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+}
+
+button.primary {
+  border-color: var(--accent);
+  color: #fff;
+  background: var(--accent);
+}
+
+.dev-toggle {
+  position: absolute;
+  top: 0;
+  right: 1rem;
+}
+
+.dev-panel {
+  display: none;
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.5rem;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+}
+
+.dev-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.dev-field input[type="color"] {
+  width: 36px;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.error {
+  min-height: 1.2rem;
+  color: var(--error);
+  font-size: 0.9rem;
+  margin: 0.35rem 0;
+  white-space: pre-wrap;
+}
+
+.preview {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.8rem;
+  overflow-x: auto;
+}
+
+#reactionCanvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  background: #fff;
+  border-radius: 6px;
+}
