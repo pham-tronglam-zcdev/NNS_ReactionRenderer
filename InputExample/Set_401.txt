@@ -1,0 +1,28 @@
+# 2024.3.20 Takashi Sato
+
+*Time,     
+0,  10000,   1000,   5000,    100,    msec
+
+*Element
+H2O, 1e13, aqua, 4
+OH-,  1e5, turquoise, 2
+H+,   1e5, pink, 3
+a,    1e6, Blue, 4
+b,    1e5, DarkTurquoise, 2
+c,    1e4, DeepPink, 3
+r,      0, green, 4
+
+*Reaction, 1e13
+r1_2, 000, 1, H2O,        1e-10, 1, H+, 1, OH-
+r2_1, 001, 1, H+, 1, OH-,   1e4, 1, H2O
+
+*Set_01
+C1, Set01_401.txt, 1
+
+*Set_02
+M1, C1, 1, Set02_401.txt, 1
+
+*Plot, log
+a, b, c, r
+
+

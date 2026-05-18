@@ -1,0 +1,47 @@
+# 2024.3.20 Takashi Sato
+
+*Element
+H2O::, 1e9, aqua, 4
+OH-::, 1e2, turquoise, 2
+H+::,  1e2, pink, 3
+
+l::,     0, MediumOrchid, >
+m::,     0, indigo, d
+n::,   1e5, tomato,  *
+q::,     0, red, 3
+
+en_Y::,1e4, MediumOrchid, +
+
+ATP::, 1e6, green, 4
+ADP::, 1e6, LightPink, |
+Pi::,  1e6, BlueViolet, _
+
+mem_P3::, 5e3, darkmagenta, x
+mem_P4::, 3e3, gray,   +
+mem_P5::, 2e3, salmon, H
+
+
+*Reaction, 1e9
+r1_2, 000::, 1, H2O::,          1e-10, 1, H+::, 1, OH-::
+r2_1, 001::, 1, H+::, 1, OH-::,   1e4, 1, H2O::
+
+r3_3, 100::, 1, l:=, 1, n::, 1, mem_P3::, 1e2, 1, l::, 1, n:=, 1, mem_P3::
+r2_2, 110::, 1, m:=, 1, mem_P4::,         1e3, 1, m::, 1, mem_P4::
+
+rM,   120::, 1, l::, 1, m::, 1, n::, 1, en_Y::
+             1e6
+             1, q::, 1, en_Y::
+
+rM,   130::, 1, q::, 1, mem_P5::, 1, ATP::, 1, H2O::
+             1e4
+             1, q:=, 1, mem_P5::, 1, ADP::, 1, Pi::
+
+
+*Plot, log
+l::, m::, n::, q::
+
+*Plot
+en_Y::, mem_P3::, mem_P4::, mem_P5::  
+
+
+

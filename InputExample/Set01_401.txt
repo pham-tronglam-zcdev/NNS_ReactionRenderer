@@ -1,0 +1,53 @@
+# 2024.3.20 Takashi Sato
+
+*Element
+H2O:=, 1e10, aqua, 4
+OH-:=,  1e2, turquoise, 2
+H+:=,   1e2, pink, 3
+a:=,      0, Blue, 4
+b:=,      0, DarkTurquoise, 2
+c:=,      0, DeepPink, 3
+
+en_X:=, 3e3, darkkhaki, 3
+en_Z:=, 2e3, BlueViolet, _
+
+l:=,      0, MediumOrchid, >
+m:=,    1e5, indigo, d
+n:=,      0, tomato,  *
+q:=,      0, red, 3
+r:=,      0, green, 4
+
+ATP:=,  1e7, green, 4
+ADP:=,  1e7, LightPink, |
+Pi:=,   1e7, BlueViolet, _
+
+mem_P1:=, 1e3, chocolate, +
+mem_P2:=, 5e2, greenyellow, o
+mem_P6:=, 3e2, darkmagenta, x
+
+
+
+*Reaction, 1e10
+r1_2, 000:=, 1, H2O:=,          1e-10, 1, H+:=, 1, OH-:=
+r2_1, 001:=, 1, H+:=, 1, OH-:=,   1e4, 1, H2O:=
+
+r2_2, 100:=, 1, a,   1, mem_P1:=, 1e2, 1, a:=, 1, mem_P1:=
+
+rM,   110:=, 1, b,   1, mem_P2:=, 1, ATP:=, 1, H2O:=
+             1e6
+             1, b:=, 1, mem_P2:=, 1, ADP:=, 1, Pi:=
+
+r1_1, 120:=, 1, c, 0.1, 1, c:=
+r1_1, 121:=, 1, c:=, 0.1, 1, c
+r3_2, 130:=, 1, a:=, 1, b:=, 1, en_X:=, 1e8, 1, l:=, 1, en_X:=
+r3_2, 140:=, 1, c:=, 1, q:=, 1, en_Z:=, 1e6, 1, r:=, 1, en_Z:=
+
+r2_2, 150:=, 1, r:=, 1, mem_P6:=, 1e4, 1, r, 1, mem_P6:=
+
+
+*Plot, log
+a:=, b:=, c:=
+l:=, m:=, q:=, r:=
+
+*Plot
+en_X:=, en_Z:=, mem_P1:=, mem_P2:=, mem_P6:=  
