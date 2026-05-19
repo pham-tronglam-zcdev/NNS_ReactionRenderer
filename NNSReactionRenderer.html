@@ -29,17 +29,15 @@
       <div id="previewStatus" class="status up-to-date">Preview status: Up to date</div>
       <div class="error toolbar-error" id="errorBox"></div>
 
-      <details class="toolbar-hints">
-        <summary>Format &amp; load help</summary>
-        <div class="hint hint--small">
-          Format example: <code>r2_2, 100, 1, COONa, 1, Cu2+, k1, 1, COOCu+, 1, Na+</code><br>
-          Species are rendered as normal text (not LaTeX). Lines starting with <code>#</code> are comments.<br>
-          Nested TXT: select all related files, pick the main file (no other file refers to it), then load.
-        </div>
-      </details>
     </aside>
 
     <main class="app-main">
+      <div class="hint app-intro">
+        Format example: <code>r2_2, 100, 1, COONa, 1, Cu2+, k1, 1, COOCu+, 1, Na+</code><br>
+        Species are rendered as normal text (not LaTeX). Lines starting with <code>#</code> are comments: rendered as text, not parsed as equations, and not equation-numbered.<br>
+        Load input TXT by clicking <code>Load nested TXT</code> in the left sidebar, select all related TXT files at once, then choose the main TXT and click <code>Load selected main file</code>. The main file is the file that starts to refer other files but no files refer it. It is the parent of all children files.
+      </div>
+
       <div class="editor">
         <pre id="lineNumbers" class="line-numbers">1</pre>
         <textarea id="input"># Demo: comment lines are rendered as text.

@@ -76,17 +76,6 @@ body {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
-.toolbar-hints {
-  margin-top: auto;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
-.toolbar-hints summary {
-  cursor: pointer;
-  font-weight: 600;
-}
-
 .toolbar-error {
   margin: 0;
   min-height: 0;
@@ -99,6 +88,11 @@ body {
   min-height: 100vh;
   padding: 1rem;
   gap: 1rem;
+}
+
+.app-intro {
+  flex: 0 0 auto;
+  margin: 0;
 }
 
 .app-main .editor {
