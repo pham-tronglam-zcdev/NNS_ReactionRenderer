@@ -35,10 +35,15 @@ const featureFlags = {
   enableNestedTxtResolution: true,
   enableEquationNumbers: true,
   enableEquationColors: true,
-  enablePngFontSelection: true
+  enablePngFontSelection: true,
+  enableStandaloneHtmlExport: true
 };
 
 const AUTO_RENDER_DEBOUNCE_MS = 500;
+
+function isFileProtocol() {
+  return window.location.protocol === "file:";
+}
 
 const specialCaseExampleLines = [
   "r1_+, 103, 0.02, 1, Feed",

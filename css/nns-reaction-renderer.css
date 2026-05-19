@@ -81,6 +81,17 @@ body {
   min-height: 0;
 }
 
+.dev-standalone-export {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.75rem;
+}
+
+.dev-standalone-export .toolbar-btn {
+  width: 100%;
+}
+
 .app-main {
   display: flex;
   flex-direction: column;

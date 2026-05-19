@@ -30,6 +30,7 @@ const pngTypographyBtn = document.getElementById("pngTypographyBtn");
 const pngTypographyPanel = document.getElementById("pngTypographyPanel");
 const pngTypographyControls = document.getElementById("pngTypographyControls");
 const resetPngTypographyBtn = document.getElementById("resetPngTypographyBtn");
+const exportStandaloneHtmlBtn = document.getElementById("exportStandaloneHtmlBtn");
 
 let pendingNestedFiles = [];
 let isPreviewDirty = false;
@@ -290,7 +291,7 @@ function bindUi() {
       errorBox.textContent = err.message;
     }
   });
-if (pngTypographyControls) {
+  if (pngTypographyControls) {
     pngTypographyControls.addEventListener("change", onPngTypographyControlChange);
     pngTypographyControls.addEventListener("input", onPngTypographyControlChange);
   }
@@ -306,6 +307,43 @@ if (pngTypographyControls) {
     pngTypographyBtn.addEventListener("click", () => {
       toggleSidebar("typography");
     });
+  }
+  if (exportStandaloneHtmlBtn) {
+    exportStandaloneHtmlBtn.addEventListener("click", async () => {
+      if (!featureFlags.enableStandaloneHtmlExport) return;
+      const label = exportStandaloneHtmlBtn.textContent;
+      exportStandaloneHtmlBtn.disabled = true;
+      exportStandaloneHtmlBtn.textContent = "Building standalone HTML…";
+      errorBox.textContent = "";
+      try {
+        await exportStandaloneHtml(errorBox);
+        errorBox.textContent =
+          "Saved NNSReactionRenderer-standalone.html. Send that file to clients — they only double-click it; no install or extra files.";
+      } catch (err) {
+        errorBox.textContent = err.message;
+      } finally {
+        exportStandaloneHtmlBtn.disabled = false;
+        exportStandaloneHtmlBtn.textContent = label;
+      }
+    });
+  }
+}
+
+function syncStandaloneExportUi() {
+  if (!exportStandaloneHtmlBtn) return;
+  exportStandaloneHtmlBtn.textContent = getStandaloneExportButtonLabel();
+  const hintEl = document.getElementById("standaloneExportHint");
+  if (!hintEl) return;
+  if (isFileProtocol()) {
+    hintEl.innerHTML =
+      "You opened this page from disk (double-click). That is fine for daily use. " +
+      "To build a <strong>single HTML file for clients</strong>, click Export and select this project folder " +
+      "(the one with <code>css/</code> and <code>js/</code>). " +
+      "Send clients only <code>NNSReactionRenderer-standalone.html</code> — they double-click it; nothing else to install.";
+  } else {
+    hintEl.innerHTML =
+      "Builds one self-contained HTML file from every <code>css/</code> and <code>js/</code> file linked on this page. " +
+      "Ship <code>NNSReactionRenderer-standalone.html</code> to clients; they open it by double-clicking (no install or server).";
   }
 }
 
@@ -430,9 +468,13 @@ function applyFeatureFlagUi() {
       pngTypographyControls.querySelectorAll("select, input").forEach(el => { el.disabled = true; });
     }
   }
+  if (!featureFlags.enableStandaloneHtmlExport && exportStandaloneHtmlBtn) {
+    exportStandaloneHtmlBtn.disabled = true;
+  }
 }
 
 function syncControlLabels() {
+  syncStandaloneExportUi();
   coefficientColorInput.value = appState.coefficientColor;
   commentColorInput.value = appState.commentColor;
   equationNumberColorInput.value = appState.equationNumberColor;

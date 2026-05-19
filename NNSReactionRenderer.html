@@ -83,6 +83,10 @@ rM,   120::, 1, l::, 1, m::, 1, n::, 1, en_Y::
       </section>
 
       <section id="devPanel" class="sidebar-panel dev-panel" data-sidebar-panel="dev">
+        <div class="dev-standalone-export" data-standalone-exclude>
+          <button type="button" id="exportStandaloneHtmlBtn" class="toolbar-btn">Export standalone HTML for clients</button>
+          <p id="standaloneExportHint" class="hint hint--small"></p>
+        </div>
         <div class="row row--compact toolbar-nav toolbar-nav--nested">
           <button id="loadTxtBtn" type="button">Load Reaction TXT</button>
           <button id="multilineBtn" type="button">Multiline: On</button>
@@ -124,6 +128,7 @@ rM,   120::, 1, l::, 1, m::, 1, n::, 1, en_Y::
   <script src="js/canvas-fonts.js"></script>
   <script src="js/canvas-render.js"></script>
   <script src="js/sidebar-ui.js"></script>
+  <script src="js/bundle-export.js" data-standalone-exclude></script>
   <script src="js/app.js"></script>
 </body>
 </html>
