@@ -6,7 +6,7 @@ function parseReaction(line, options = {}) {
   const isSpecial = reactionType === "r1_+" || reactionType === "r1_-" || reactionType === "r+-=";
   if (isSpecial) {
     if (!specialEdgeCasesEnabled) {
-      throw new Error(`Special reaction type "${reactionType}" is disabled. Turn ON 'Special reaction edge cases' in Dev mode.`);
+      throw new Error(`Special reaction type "${reactionType}" is disabled. Turn ON 'Special reaction edge cases' in the left toolbar.`);
     }
     return parseSpecialReaction(line);
   }
