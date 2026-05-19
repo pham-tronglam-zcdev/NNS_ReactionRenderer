@@ -7,18 +7,42 @@
   <link rel="stylesheet" href="css/nns-reaction-renderer.css">
 </head>
 <body>
-  <div class="wrap">
-    <h1>Text Reaction Renderer (Plain Text Species)</h1>
-    <div class="hint">
-      Format example: <code>r2_2, 100, 1, COONa, 1, Cu2+, k1, 1, COOCu+, 1, Na+</code><br>
-      Species are rendered as normal text (not LaTeX). Lines starting with <code>#</code> are comments: rendered as text, not parsed as equations, and not equation-numbered.<br>
-      Load input TXT by clicking <code>Load TXT (handle also the case of pointing to other TXT files)</code>, select all related TXT files at once, then choose the main TXT and click <code>Load selected main file</code>. The main file is the file that starts to refer other files but no files refer it. It is the parent of all children files.
-    </div>
-    <div id="previewStatus" class="status up-to-date">Preview status: Up to date</div>
+  <div class="app-shell">
+    <aside id="appToolbar" class="toolbar-sidebar" aria-label="Actions">
+      <h1 class="toolbar-sidebar-title">Reaction Renderer</h1>
 
-    <div class="editor">
-      <pre id="lineNumbers" class="line-numbers">1</pre>
-      <textarea id="input"># Demo: comment lines are rendered as text.
+      <nav class="toolbar-nav" aria-label="Main actions">
+        <button class="primary toolbar-btn" type="button" id="renderBtn">Render</button>
+        <button class="toolbar-btn" type="button" id="exportBtn">Export PNG</button>
+        <button class="toolbar-btn" type="button" id="resetBtn">Reset Example</button>
+        <button class="toolbar-btn" type="button" id="equationNumbersBtn">Show equation numbers: Off</button>
+        <button class="toolbar-btn" type="button" id="commentAlignBtn">Comment align: Left</button>
+        <button class="toolbar-btn" type="button" id="colorCustomizationBtn">Color customization: Off</button>
+        <button class="toolbar-btn" type="button" id="devOnlyBtn">Dev tools</button>
+        <button class="toolbar-btn" type="button" id="pngTypographyBtn" hidden>PNG typography</button>
+        <button class="toolbar-btn" type="button" id="loadNestedTxtBtn">Load nested TXT</button>
+      </nav>
+
+      <input id="txtFileInput" type="file" accept=".txt,text/plain" hidden>
+      <input id="nestedTxtFileInput" type="file" accept=".txt,text/plain" multiple hidden>
+
+      <div id="previewStatus" class="status up-to-date">Preview status: Up to date</div>
+      <div class="error toolbar-error" id="errorBox"></div>
+
+      <details class="toolbar-hints">
+        <summary>Format &amp; load help</summary>
+        <div class="hint hint--small">
+          Format example: <code>r2_2, 100, 1, COONa, 1, Cu2+, k1, 1, COOCu+, 1, Na+</code><br>
+          Species are rendered as normal text (not LaTeX). Lines starting with <code>#</code> are comments.<br>
+          Nested TXT: select all related files, pick the main file (no other file refers to it), then load.
+        </div>
+      </details>
+    </aside>
+
+    <main class="app-main">
+      <div class="editor">
+        <pre id="lineNumbers" class="line-numbers">1</pre>
+        <textarea id="input"># Demo: comment lines are rendered as text.
 # Use # for notes and section separators.
 # Equations below:
 r2_2, 100, 1, COONa, 1, Cu2+, k1, 1, COOCu+, 1, Na+
@@ -27,34 +51,19 @@ r2_1, 102, 2, X, 1, Y, 0.5, 1, Z
 rM,   120::, 1, l::, 1, m::, 1, n::, 1, en_Y::
              1e6
              1, q::, 1, en_Y::</textarea>
-    </div>
+      </div>
 
-    <div class="row toolbar">
-      <button class="primary" id="renderBtn">Render</button>
-      <button id="exportBtn">Export PNG</button>
-      <button id="resetBtn">Reset Example</button>
-      <button id="equationNumbersBtn">Show equation numbers: Off</button>
-      <button id="commentAlignBtn">Comment align: Left</button>
-      <button id="colorCustomizationBtn">Color customization: Off</button>
-      <button id="devOnlyBtn">Dev tools</button>
-      <button id="pngTypographyBtn" type="button" hidden>PNG typography</button>
-      <button id="loadNestedTxtBtn">Load TXT (handle also the case of pointing to other TXT files)</button>
-      <input id="txtFileInput" type="file" accept=".txt,text/plain" hidden>
-      <input id="nestedTxtFileInput" type="file" accept=".txt,text/plain" multiple hidden>
-    </div>
-
-    <div class="error" id="errorBox"></div>
-
-    <div class="preview preview--sticky">
-      <canvas id="reactionCanvas" width="900" height="220"></canvas>
-    </div>
+      <div class="preview preview--sticky">
+        <canvas id="reactionCanvas" width="900" height="220"></canvas>
+      </div>
+    </main>
   </div>
 
   <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
-  <aside id="appSidebar" class="app-sidebar" aria-label="Settings sidebar">
+  <aside id="appSidebar" class="app-sidebar app-sidebar--detail" aria-label="Detail settings">
     <header class="sidebar-header">
       <h2 id="sidebarTitle" class="sidebar-title">Settings</h2>
-      <button id="sidebarCloseBtn" type="button" class="sidebar-close" aria-label="Close sidebar">×</button>
+      <button id="sidebarCloseBtn" type="button" class="sidebar-close" aria-label="Close panel">×</button>
     </header>
     <div class="sidebar-body">
       <section id="colorPanel" class="sidebar-panel dev-panel" data-sidebar-panel="colors">
@@ -71,18 +80,18 @@ rM,   120::, 1, l::, 1, m::, 1, n::, 1, en_Y::
             Equation number color
             <input id="equationNumberColorInput" type="color" value="#000000">
           </label>
-          <button id="resetDevColorsBtn">Reset Dev Colors</button>
+          <button id="resetDevColorsBtn" type="button">Reset Dev Colors</button>
         </div>
       </section>
 
       <section id="devPanel" class="sidebar-panel dev-panel" data-sidebar-panel="dev">
-        <div class="row row--compact">
-          <button id="loadTxtBtn">Load Reaction TXT</button>
-          <button id="multilineBtn">Multiline: On</button>
-          <button id="rmBlockBtn">Handle rM 3-line format: On</button>
-          <button id="alignArrowsBtn">Align equation arrows: Off</button>
-          <button id="stickLeftToArrowBtn">Left side stick to arrow: Off</button>
-          <button id="specialReactionBtn">Special reaction edge cases (not verified correctness yet): Off</button>
+        <div class="row row--compact toolbar-nav toolbar-nav--nested">
+          <button id="loadTxtBtn" type="button">Load Reaction TXT</button>
+          <button id="multilineBtn" type="button">Multiline: On</button>
+          <button id="rmBlockBtn" type="button">Handle rM 3-line format: On</button>
+          <button id="alignArrowsBtn" type="button">Align equation arrows: Off</button>
+          <button id="stickLeftToArrowBtn" type="button">Left side stick to arrow: Off</button>
+          <button id="specialReactionBtn" type="button">Special reaction edge cases (not verified correctness yet): Off</button>
         </div>
         <div class="hint hint--small">
           Align equation arrows and left-side stick apply to multiline render only.
@@ -94,7 +103,7 @@ rM,   120::, 1, l::, 1, m::, 1, n::, 1, en_Y::
         <div class="row row--compact nested-root-row" id="nestedRootRow">
           <label for="nestedRootSelect">Choose main TXT file:</label>
           <select id="nestedRootSelect"></select>
-          <button id="confirmNestedRootBtn">Load selected main file</button>
+          <button id="confirmNestedRootBtn" type="button">Load selected main file</button>
         </div>
       </section>
 

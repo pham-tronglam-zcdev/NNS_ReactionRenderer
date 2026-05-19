@@ -30,12 +30,17 @@ function setActiveSidebarPanel(panelKey) {
   if (titleEl) titleEl.textContent = config.title;
 }
 
+function notifySidebarChange() {
+  if (typeof syncSidebarUiState === "function") syncSidebarUiState();
+}
+
 function openSidebar(panelKey) {
   if (!SIDEBAR_PANEL_CONFIG[panelKey]) return;
   setActiveSidebarPanel(panelKey);
   const { body, backdrop } = getSidebarElements();
   body.classList.add("sidebar-open");
   if (backdrop) backdrop.setAttribute("aria-hidden", "false");
+  notifySidebarChange();
 }
 
 function closeSidebar() {
@@ -46,6 +51,7 @@ function closeSidebar() {
   document.querySelectorAll(".sidebar-panel").forEach(panel => {
     panel.classList.remove("is-active");
   });
+  notifySidebarChange();
 }
 
 function toggleSidebar(panelKey) {

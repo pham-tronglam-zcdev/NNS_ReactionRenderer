@@ -154,11 +154,9 @@ function bindUi() {
   });
   devOnlyBtn.addEventListener("click", () => {
     toggleSidebar("dev");
-    syncSidebarButtonLabels();
   });
   colorCustomizationBtn.addEventListener("click", () => {
     toggleSidebar("colors");
-    syncSidebarButtonLabels();
   });
   inputEl.addEventListener("input", () => {
     refreshLineNumbers();
@@ -283,8 +281,12 @@ function bindUi() {
   });
 }
 
-function syncSidebarButtonLabels() {
-  colorCustomizationBtn.textContent = `Color customization: ${isSidebarPanelOpen("colors") ? "On" : "Off"}`;
+function syncSidebarUiState() {
+  const colorsOpen = isSidebarPanelOpen("colors");
+  const devOpen = isSidebarPanelOpen("dev");
+  colorCustomizationBtn.textContent = `Color customization: ${colorsOpen ? "On" : "Off"}`;
+  colorCustomizationBtn.classList.toggle("is-active", colorsOpen);
+  devOnlyBtn.classList.toggle("is-active", devOpen);
 }
 
 function applyFeatureFlagUi() {
@@ -315,7 +317,7 @@ function syncControlLabels() {
   stickLeftToArrowBtn.textContent = `Left side stick to arrow: ${appState.stickLeftToArrowEnabled ? "On" : "Off"}`;
   specialReactionBtn.textContent = `Special reaction edge cases (not verified correctness yet): ${appState.specialReactionEdgeCasesEnabled ? "On" : "Off"}`;
   commentAlignBtn.textContent = `Comment align: ${appState.centerCommentLines ? "Center" : "Left"}`;
-  syncSidebarButtonLabels();
+  syncSidebarUiState();
 }
 
 function initApp() {
