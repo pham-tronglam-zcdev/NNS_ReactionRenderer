@@ -58,6 +58,11 @@ body {
   margin: 0;
 }
 
+.toolbar-hint {
+  margin: 0;
+  line-height: 1.3;
+}
+
 .toolbar-nav--nested {
   gap: 0.45rem;
 }
