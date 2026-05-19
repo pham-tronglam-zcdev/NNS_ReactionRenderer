@@ -145,7 +145,6 @@ textarea {
 }
 
 .nested-root-row {
-  display: none;
   margin-top: 0;
 }
 
@@ -164,18 +163,84 @@ button.primary {
   background: var(--accent);
 }
 
-.dev-toggle {
-  position: absolute;
-  top: 0;
-  right: 1rem;
+.toolbar {
+  margin-bottom: 0.5rem;
 }
 
 .dev-panel {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+body.sidebar-open .sidebar-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.app-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  width: min(420px, 100vw);
+  height: 100vh;
+  background: var(--bg);
+  border-left: 1px solid var(--line);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+}
+
+body.sidebar-open .app-sidebar {
+  transform: translateX(0);
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.sidebar-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.sidebar-close {
+  font-size: 1.4rem;
+  line-height: 1;
+  padding: 0.2rem 0.55rem;
+}
+
+.sidebar-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.sidebar-panel {
   display: none;
-  margin: 0.5rem 0 0.75rem;
-  padding: 0.5rem;
-  border: 1px dashed var(--line);
-  border-radius: 8px;
+}
+
+.sidebar-panel.is-active {
+  display: block;
 }
 
 .dev-field {
@@ -209,6 +274,13 @@ button.primary {
   border-radius: 10px;
   padding: 0.8rem;
   overflow-x: auto;
+}
+
+.preview--sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: var(--bg);
 }
 
 #reactionCanvas {

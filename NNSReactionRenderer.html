@@ -8,7 +8,6 @@
 </head>
 <body>
   <div class="wrap">
-    <button id="devOnlyBtn" class="dev-toggle">Dev Only</button>
     <h1>Text Reaction Renderer (Plain Text Species)</h1>
     <div class="hint">
       Format example: <code>r2_2, 100, 1, COONa, 1, Cu2+, k1, 1, COOCu+, 1, Na+</code><br>
@@ -30,65 +29,88 @@ rM,   120::, 1, l::, 1, m::, 1, n::, 1, en_Y::
              1, q::, 1, en_Y::</textarea>
     </div>
 
-    <div class="row">
+    <div class="row toolbar">
       <button class="primary" id="renderBtn">Render</button>
       <button id="exportBtn">Export PNG</button>
       <button id="resetBtn">Reset Example</button>
       <button id="equationNumbersBtn">Show equation numbers: Off</button>
       <button id="commentAlignBtn">Comment align: Left</button>
-      <button id="colorCustomizationBtn">Color customization</button>
+      <button id="colorCustomizationBtn">Color customization: Off</button>
+      <button id="devOnlyBtn">Dev tools</button>
+      <button id="pngTypographyBtn" type="button" hidden>PNG typography</button>
       <button id="loadNestedTxtBtn">Load TXT (handle also the case of pointing to other TXT files)</button>
       <input id="txtFileInput" type="file" accept=".txt,text/plain" hidden>
       <input id="nestedTxtFileInput" type="file" accept=".txt,text/plain" multiple hidden>
     </div>
-    <div id="colorPanel" class="dev-panel">
-      <div class="row row--compact">
-        <label class="dev-field" for="coefficientColorInput">
-          Coefficient color
-          <input id="coefficientColorInput" type="color" value="#000000">
-        </label>
-        <label class="dev-field" for="commentColorInput">
-          Comment color
-          <input id="commentColorInput" type="color" value="#666666">
-        </label>
-        <label class="dev-field" for="equationNumberColorInput">
-          Equation number color
-          <input id="equationNumberColorInput" type="color" value="#000000">
-        </label>
-        <button id="resetDevColorsBtn">Reset Dev Colors</button>
-      </div>
-    </div>
-    <div id="devPanel" class="dev-panel">
-      <div class="row row--compact">
-        <button id="loadTxtBtn">Load Reaction TXT</button>
-        <button id="multilineBtn">Multiline: On</button>
-        <button id="rmBlockBtn">Handle rM 3-line format: On</button>
-        <button id="alignArrowsBtn">Align equation arrows: Off</button>
-        <button id="stickLeftToArrowBtn">Left side stick to arrow: Off</button>
-        <button id="specialReactionBtn">Special reaction edge cases (not verified correctness yet): Off</button>
-      </div>
-      <div class="hint hint--small">
-        Align equation arrows and left-side stick apply to multiline render only.
-      </div>
-    </div>
-    <div class="row row--compact nested-root-row" id="nestedRootRow">
-      <label for="nestedRootSelect">Choose main TXT file:</label>
-      <select id="nestedRootSelect"></select>
-      <button id="confirmNestedRootBtn">Load selected main file</button>
-    </div>
 
     <div class="error" id="errorBox"></div>
 
-    <div class="preview">
+    <div class="preview preview--sticky">
       <canvas id="reactionCanvas" width="900" height="220"></canvas>
     </div>
   </div>
+
+  <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+  <aside id="appSidebar" class="app-sidebar" aria-label="Settings sidebar">
+    <header class="sidebar-header">
+      <h2 id="sidebarTitle" class="sidebar-title">Settings</h2>
+      <button id="sidebarCloseBtn" type="button" class="sidebar-close" aria-label="Close sidebar">×</button>
+    </header>
+    <div class="sidebar-body">
+      <section id="colorPanel" class="sidebar-panel dev-panel" data-sidebar-panel="colors">
+        <div class="row row--compact">
+          <label class="dev-field" for="coefficientColorInput">
+            Coefficient color
+            <input id="coefficientColorInput" type="color" value="#000000">
+          </label>
+          <label class="dev-field" for="commentColorInput">
+            Comment color
+            <input id="commentColorInput" type="color" value="#666666">
+          </label>
+          <label class="dev-field" for="equationNumberColorInput">
+            Equation number color
+            <input id="equationNumberColorInput" type="color" value="#000000">
+          </label>
+          <button id="resetDevColorsBtn">Reset Dev Colors</button>
+        </div>
+      </section>
+
+      <section id="devPanel" class="sidebar-panel dev-panel" data-sidebar-panel="dev">
+        <div class="row row--compact">
+          <button id="loadTxtBtn">Load Reaction TXT</button>
+          <button id="multilineBtn">Multiline: On</button>
+          <button id="rmBlockBtn">Handle rM 3-line format: On</button>
+          <button id="alignArrowsBtn">Align equation arrows: Off</button>
+          <button id="stickLeftToArrowBtn">Left side stick to arrow: Off</button>
+          <button id="specialReactionBtn">Special reaction edge cases (not verified correctness yet): Off</button>
+        </div>
+        <div class="hint hint--small">
+          Align equation arrows and left-side stick apply to multiline render only.
+        </div>
+      </section>
+
+      <section id="nestedLoadPanel" class="sidebar-panel" data-sidebar-panel="nested">
+        <p class="hint hint--small">Select all related TXT files, then choose the main file and load.</p>
+        <div class="row row--compact nested-root-row" id="nestedRootRow">
+          <label for="nestedRootSelect">Choose main TXT file:</label>
+          <select id="nestedRootSelect"></select>
+          <button id="confirmNestedRootBtn">Load selected main file</button>
+        </div>
+      </section>
+
+      <section id="pngTypographyPanel" class="sidebar-panel" data-sidebar-panel="typography" hidden>
+        <div id="pngTypographyControls"></div>
+        <button id="resetPngTypographyBtn" type="button" hidden>Reset PNG typography</button>
+      </section>
+    </div>
+  </aside>
 
   <script src="js/config.js"></script>
   <script src="js/text-utils.js"></script>
   <script src="js/parse-reaction.js"></script>
   <script src="js/nns-file-io.js"></script>
   <script src="js/canvas-render.js"></script>
+  <script src="js/sidebar-ui.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
