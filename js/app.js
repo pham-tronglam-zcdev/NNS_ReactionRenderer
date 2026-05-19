@@ -26,6 +26,10 @@ const nestedRootRow = document.getElementById("nestedRootRow");
 const nestedRootSelect = document.getElementById("nestedRootSelect");
 const confirmNestedRootBtn = document.getElementById("confirmNestedRootBtn");
 const previewStatusEl = document.getElementById("previewStatus");
+const pngTypographyBtn = document.getElementById("pngTypographyBtn");
+const pngTypographyPanel = document.getElementById("pngTypographyPanel");
+const pngTypographyControls = document.getElementById("pngTypographyControls");
+const resetPngTypographyBtn = document.getElementById("resetPngTypographyBtn");
 
 let pendingNestedFiles = [];
 let isPreviewDirty = false;
@@ -72,23 +76,30 @@ function render() {
     const equationNumberColor = featureFlags.enableEquationColors ? appState.equationNumberColor : "#000000";
     const rmBlockActive = featureFlags.enableRMBlockParsing && appState.rmBlockParsingEnabled;
     const specialEdgeCasesActive = featureFlags.enableSpecialReactionEdgeCases && appState.specialReactionEdgeCasesEnabled;
+    const pngFontStyles = featureFlags.enablePngFontSelection
+      ? normalizePngFontStyles(appState.pngFontStyles)
+      : createDefaultPngFontStyles();
+    const renderOptions = {
+      showEquationNumbers,
+      coefficientColor,
+      commentColor,
+      equationNumberColor,
+      pngFontStyles
+    };
     const lines = splitNonEmptyLines(inputEl.value);
     if (multilineActive) {
       if (lines.length === 0) throw new Error("Multiline mode is ON, but no reaction lines were found.");
       const rows = parseRenderableRows(lines, rmBlockActive, { specialEdgeCasesEnabled: specialEdgeCasesActive });
       drawRenderableRows(canvas, ctx, rows, {
-        showEquationNumbers,
-        coefficientColor,
-        commentColor,
+        ...renderOptions,
         centerCommentLines: appState.centerCommentLines,
         alignEquationArrows: appState.alignEquationArrowsEnabled,
-        stickLeftToArrow: appState.stickLeftToArrowEnabled,
-        equationNumberColor
+        stickLeftToArrow: appState.stickLeftToArrowEnabled
       });
     } else {
       drawSingleReaction(
         canvas, ctx, parseFirstReactionFromLines(lines, rmBlockActive, { specialEdgeCasesEnabled: specialEdgeCasesActive }),
-        { showEquationNumbers, coefficientColor, equationNumberColor }
+        renderOptions
       );
     }
     setPreviewDirty(false);
@@ -279,14 +290,120 @@ function bindUi() {
       errorBox.textContent = err.message;
     }
   });
+if (pngTypographyControls) {
+    pngTypographyControls.addEventListener("change", onPngTypographyControlChange);
+    pngTypographyControls.addEventListener("input", onPngTypographyControlChange);
+  }
+  if (resetPngTypographyBtn) {
+    resetPngTypographyBtn.addEventListener("click", () => {
+      if (!featureFlags.enablePngFontSelection) return;
+      appState.pngFontStyles = createDefaultPngFontStyles();
+      syncPngTypographyControlsFromState();
+      render();
+    });
+  }
+  if (pngTypographyBtn) {
+    pngTypographyBtn.addEventListener("click", () => {
+      toggleSidebar("typography");
+    });
+  }
 }
+
+function onPngTypographyControlChange(event) {
+  if (!featureFlags.enablePngFontSelection) return;
+  const target = event.target;
+  if (!target || !target.dataset || !target.dataset.role) return;
+  const roleId = target.dataset.role;
+  const prop = target.dataset.prop;
+  if (!getPngFontRole(roleId)) return;
+  appState.pngFontStyles = normalizePngFontStyles(appState.pngFontStyles);
+  if (prop === "family") {
+    appState.pngFontStyles[roleId].family = isAllowedJournalPngFont(target.value)
+      ? target.value
+      : getPngFontRole(roleId).defaultFamily;
+  } else if (prop === "size") {
+    appState.pngFontStyles[roleId].size = clampPngFontSize(roleId, target.value);
+    target.value = String(appState.pngFontStyles[roleId].size);
+  }
+  render();
+}
+
+function appendJournalFontOptions(selectEl, selectedFamily) {
+  selectEl.innerHTML = "";
+  for (const entry of JOURNAL_PNG_FONTS) {
+    const option = document.createElement("option");
+    option.value = entry.id;
+    option.textContent = entry.label;
+    selectEl.appendChild(option);
+  }
+  selectEl.value = isAllowedJournalPngFont(selectedFamily) ? selectedFamily : "Arial";
+}
+
+function buildPngTypographyPanel() {
+  if (!pngTypographyControls) return;
+  pngTypographyControls.innerHTML = "";
+  const styles = normalizePngFontStyles(appState.pngFontStyles);
+  for (const role of PNG_FONT_ROLES) {
+    const fieldset = document.createElement("fieldset");
+    fieldset.className = "dev-typography-role";
+    const legend = document.createElement("legend");
+    legend.textContent = role.label;
+    fieldset.appendChild(legend);
+
+    const row = document.createElement("div");
+    row.className = "dev-typography-role__controls";
+
+    const fontLabel = document.createElement("label");
+    fontLabel.className = "dev-typography-field";
+    const fontSelect = document.createElement("select");
+    fontSelect.dataset.role = role.id;
+    fontSelect.dataset.prop = "family";
+    fontSelect.setAttribute("aria-label", `${role.label} font`);
+    appendJournalFontOptions(fontSelect, styles[role.id].family);
+    fontLabel.append("Font ", fontSelect);
+
+    const sizeLabel = document.createElement("label");
+    sizeLabel.className = "dev-typography-field";
+    const sizeInput = document.createElement("input");
+    sizeInput.type = "number";
+    sizeInput.min = String(role.minSize);
+    sizeInput.max = String(role.maxSize);
+    sizeInput.step = "1";
+    sizeInput.dataset.role = role.id;
+    sizeInput.dataset.prop = "size";
+    sizeInput.value = String(styles[role.id].size);
+    sizeInput.setAttribute("aria-label", `${role.label} size in pixels`);
+    sizeLabel.append("Size (px) ", sizeInput);
+
+    row.append(fontLabel, sizeLabel);
+    fieldset.appendChild(row);
+    pngTypographyControls.appendChild(fieldset);
+  }
+}
+
+function syncPngTypographyControlsFromState() {
+  if (!pngTypographyControls) return;
+  const styles = normalizePngFontStyles(appState.pngFontStyles);
+  for (const role of PNG_FONT_ROLES) {
+    const fontSelect = pngTypographyControls.querySelector(`select[data-role="${role.id}"][data-prop="family"]`);
+    const sizeInput = pngTypographyControls.querySelector(`input[data-role="${role.id}"][data-prop="size"]`);
+    if (fontSelect) appendJournalFontOptions(fontSelect, styles[role.id].family);
+    if (sizeInput) sizeInput.value = String(styles[role.id].size);
+  }
+}
+
 
 function syncSidebarUiState() {
   const colorsOpen = isSidebarPanelOpen("colors");
   const devOpen = isSidebarPanelOpen("dev");
+  const typographyOpen = isSidebarPanelOpen("typography");
   colorCustomizationBtn.textContent = `Color customization: ${colorsOpen ? "On" : "Off"}`;
   colorCustomizationBtn.classList.toggle("is-active", colorsOpen);
   devOnlyBtn.classList.toggle("is-active", devOpen);
+  if (pngTypographyBtn) {
+    pngTypographyBtn.textContent = `PNG typography: ${typographyOpen ? "On" : "Off"}`;
+    pngTypographyBtn.classList.toggle("is-active", typographyOpen);
+  }
 }
 
 function applyFeatureFlagUi() {
@@ -306,6 +423,13 @@ function applyFeatureFlagUi() {
     equationNumberColorInput.disabled = true;
     resetDevColorsBtn.disabled = true;
   }
+  if (!featureFlags.enablePngFontSelection) {
+    if (pngTypographyBtn) pngTypographyBtn.disabled = true;
+    if (resetPngTypographyBtn) resetPngTypographyBtn.disabled = true;
+    if (pngTypographyControls) {
+      pngTypographyControls.querySelectorAll("select, input").forEach(el => { el.disabled = true; });
+    }
+  }
 }
 
 function syncControlLabels() {
@@ -321,6 +445,8 @@ function syncControlLabels() {
 }
 
 function initApp() {
+  appState.pngFontStyles = createDefaultPngFontStyles();
+  buildPngTypographyPanel();
   initSidebarUi();
   bindUi();
   applyFeatureFlagUi();

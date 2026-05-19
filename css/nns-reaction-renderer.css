@@ -330,6 +330,61 @@ body.sidebar-open .app-main {
   cursor: pointer;
 }
 
+.dev-typography-intro {
+  margin: 0 0 0.65rem;
+}
+
+.dev-typography-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 0.5rem;
+}
+
+.dev-typography-role {
+  margin: 0;
+  padding: 0.55rem 0.65rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg) 92%, var(--line) 8%);
+}
+
+.dev-typography-role legend {
+  padding: 0 0.35rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.dev-typography-role__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  align-items: center;
+}
+
+.dev-typography-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.dev-typography-field select {
+  min-width: 11rem;
+}
+
+.dev-typography-field input[type="number"] {
+  width: 4.5rem;
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.3rem 0.4rem;
+}
+
 .error {
   min-height: 1.2rem;
   color: var(--error);

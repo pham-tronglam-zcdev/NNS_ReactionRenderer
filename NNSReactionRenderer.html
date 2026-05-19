@@ -19,7 +19,7 @@
         <button class="toolbar-btn" type="button" id="commentAlignBtn">Comment align: Left</button>
         <button class="toolbar-btn" type="button" id="colorCustomizationBtn">Color customization: Off</button>
         <button class="toolbar-btn" type="button" id="devOnlyBtn">Dev tools</button>
-        <button class="toolbar-btn" type="button" id="pngTypographyBtn" hidden>PNG typography</button>
+        <button class="toolbar-btn" type="button" id="pngTypographyBtn">PNG typography: Off</button>
         <button class="toolbar-btn" type="button" id="loadNestedTxtBtn">Load nested TXT</button>
       </nav>
 
@@ -105,9 +105,14 @@ rM,   120::, 1, l::, 1, m::, 1, n::, 1, en_Y::
         </div>
       </section>
 
-      <section id="pngTypographyPanel" class="sidebar-panel" data-sidebar-panel="typography" hidden>
-        <div id="pngTypographyControls"></div>
-        <button id="resetPngTypographyBtn" type="button" hidden>Reset PNG typography</button>
+      <section id="pngTypographyPanel" class="sidebar-panel dev-typography-panel" data-sidebar-panel="typography">
+        <p class="hint hint--small dev-typography-intro">
+          Fonts and sizes for the equation preview and exported PNG. Journal options: Times New Roman, Arial, Helvetica.
+        </p>
+        <div id="pngTypographyControls" class="dev-typography-controls"></div>
+        <div class="row row--compact">
+          <button type="button" id="resetPngTypographyBtn">Reset typography defaults</button>
+        </div>
       </section>
     </div>
   </aside>
@@ -116,6 +121,7 @@ rM,   120::, 1, l::, 1, m::, 1, n::, 1, en_Y::
   <script src="js/text-utils.js"></script>
   <script src="js/parse-reaction.js"></script>
   <script src="js/nns-file-io.js"></script>
+  <script src="js/canvas-fonts.js"></script>
   <script src="js/canvas-render.js"></script>
   <script src="js/sidebar-ui.js"></script>
   <script src="js/app.js"></script>

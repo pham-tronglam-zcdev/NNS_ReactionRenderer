@@ -22,6 +22,7 @@ const appState = {
   coefficientColor: "#000000",
   commentColor: "#666666",
   equationNumberColor: "#000000",
+  pngFontStyles: null,
   defaultInput: DEFAULT_INPUT
 };
 
@@ -33,7 +34,8 @@ const featureFlags = {
   enableTxtImport: true,
   enableNestedTxtResolution: true,
   enableEquationNumbers: true,
-  enableEquationColors: true
+  enableEquationColors: true,
+  enablePngFontSelection: true
 };
 
 const AUTO_RENDER_DEBOUNCE_MS = 500;
