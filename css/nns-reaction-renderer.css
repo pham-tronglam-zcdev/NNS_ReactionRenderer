@@ -26,11 +26,19 @@ body {
   color: var(--fg);
 }
 
-.wrap {
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-main.wrap {
   max-width: 980px;
   margin: 1.25rem auto;
-  padding: 0 1rem 1rem;
+  padding: 0 1rem 1.5rem;
   position: relative;
+}
+
+.toolbar-main {
+  margin-bottom: 0.5rem;
 }
 
 h1 {
@@ -147,6 +155,13 @@ textarea {
 .nested-root-row {
   display: none;
   margin-top: 0;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.nested-root-row.is-visible {
+  display: flex;
 }
 
 button {
@@ -164,18 +179,153 @@ button.primary {
   background: var(--accent);
 }
 
-.dev-toggle {
-  position: absolute;
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: color-mix(in srgb, #000 35%, transparent);
+  cursor: pointer;
+}
+
+.app-sidebar {
+  position: fixed;
   top: 0;
-  right: 1rem;
+  right: 0;
+  z-index: 50;
+  width: min(100%, 22rem);
+  max-width: 100vw;
+  height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-left: 1px solid var(--line);
+  box-shadow: -8px 0 24px color-mix(in srgb, #000 18%, transparent);
+  transform: translateX(100%);
+  transition: transform 0.22s ease;
+}
+
+body.sidebar-open .app-sidebar {
+  transform: translateX(0);
+}
+
+body.sidebar-open {
+  overflow: hidden;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.sidebar-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+
+.sidebar-close-btn {
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0.15rem 0.55rem;
+}
+
+.sidebar-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 1rem 1.25rem;
+}
+
+.sidebar-panel {
+  display: none;
+}
+
+.sidebar-panel.is-active {
+  display: block;
 }
 
 .dev-panel {
-  display: none;
-  margin: 0.5rem 0 0.75rem;
-  padding: 0.5rem;
-  border: 1px dashed var(--line);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dev-section-title {
+  font-size: 1rem;
+  font-weight: 650;
+  margin: 0 0 0.5rem;
+  color: var(--fg);
+}
+
+.dev-typography-panel .dev-typography-intro {
+  margin: 0 0 0.65rem;
+}
+
+.dev-typography-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 0.5rem;
+}
+
+.dev-typography-role {
+  margin: 0;
+  padding: 0.55rem 0.65rem 0.65rem;
+  border: 1px solid var(--line);
   border-radius: 8px;
+  background: color-mix(in srgb, var(--bg) 92%, var(--line) 8%);
+}
+
+.dev-typography-role legend {
+  padding: 0 0.35rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.dev-typography-role__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  align-items: center;
+}
+
+.dev-typography-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.dev-field select,
+.dev-typography-field select {
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  max-width: min(100%, 28rem);
+  cursor: pointer;
+}
+
+.dev-typography-field input[type="number"] {
+  width: 4.5rem;
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.3rem 0.4rem;
 }
 
 .dev-field {
@@ -209,6 +359,14 @@ button.primary {
   border-radius: 10px;
   padding: 0.8rem;
   overflow-x: auto;
+}
+
+.preview--sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: var(--bg);
+  box-shadow: 0 -4px 16px color-mix(in srgb, var(--bg) 70%, transparent);
 }
 
 #reactionCanvas {

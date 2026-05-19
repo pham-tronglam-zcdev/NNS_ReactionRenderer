@@ -28,8 +28,6 @@ const confirmNestedRootBtn = document.getElementById("confirmNestedRootBtn");
 const previewStatusEl = document.getElementById("previewStatus");
 
 let pendingNestedFiles = [];
-let devPanelVisible = false;
-let colorPanelVisible = false;
 let isPreviewDirty = false;
 let autoRenderTimer = null;
 
@@ -155,13 +153,10 @@ function bindUi() {
     render();
   });
   devOnlyBtn.addEventListener("click", () => {
-    devPanelVisible = !devPanelVisible;
-    devPanel.style.display = devPanelVisible ? "block" : "none";
+    toggleSidebar("dev");
   });
   colorCustomizationBtn.addEventListener("click", () => {
-    colorPanelVisible = !colorPanelVisible;
-    colorPanel.style.display = colorPanelVisible ? "block" : "none";
-    colorCustomizationBtn.textContent = `Color customization: ${colorPanelVisible ? "On" : "Off"}`;
+    toggleSidebar("colors");
   });
   inputEl.addEventListener("input", () => {
     refreshLineNumbers();
@@ -264,7 +259,10 @@ function bindUi() {
   nestedTxtFileInput.addEventListener("change", async () => {
     pendingNestedFiles = Array.from(nestedTxtFileInput.files || []);
     nestedTxtFileInput.value = "";
-    if (pendingNestedFiles.length === 0) { nestedRootRow.style.display = "none"; return; }
+    if (pendingNestedFiles.length === 0) {
+      nestedRootRow.classList.remove("is-visible");
+      return;
+    }
     nestedRootSelect.innerHTML = "";
     for (const file of pendingNestedFiles) {
       const option = document.createElement("option");
@@ -272,14 +270,16 @@ function bindUi() {
       option.textContent = file.name;
       nestedRootSelect.appendChild(option);
     }
-    nestedRootRow.style.display = "flex";
+    nestedRootRow.classList.add("is-visible");
+    openSidebar("nested");
   });
   confirmNestedRootBtn.addEventListener("click", async () => {
     try {
       errorBox.textContent = "";
       await loadReactionTxtWithNested(pendingNestedFiles);
       pendingNestedFiles = [];
-      nestedRootRow.style.display = "none";
+      nestedRootRow.classList.remove("is-visible");
+      closeSidebar();
     } catch (err) {
       errorBox.textContent = err.message;
     }
@@ -314,10 +314,11 @@ function syncControlLabels() {
   stickLeftToArrowBtn.textContent = `Left side stick to arrow: ${appState.stickLeftToArrowEnabled ? "On" : "Off"}`;
   specialReactionBtn.textContent = `Special reaction edge cases (not verified correctness yet): ${appState.specialReactionEdgeCasesEnabled ? "On" : "Off"}`;
   commentAlignBtn.textContent = `Comment align: ${appState.centerCommentLines ? "Center" : "Left"}`;
-  colorCustomizationBtn.textContent = `Color customization: ${colorPanelVisible ? "On" : "Off"}`;
+  syncSidebarTriggerLabels();
 }
 
 function initApp() {
+  initSidebarUi();
   bindUi();
   applyFeatureFlagUi();
   syncControlLabels();

@@ -7,19 +7,82 @@
   <link rel="stylesheet" href="css/nns-reaction-renderer.css">
 </head>
 <body>
-  <div class="wrap">
-    <button id="devOnlyBtn" class="dev-toggle">Dev Only</button>
-    <h1>Text Reaction Renderer (Plain Text Species)</h1>
-    <div class="hint">
-      Format example: <code>r2_2, 100, 1, COONa, 1, Cu2+, k1, 1, COOCu+, 1, Na+</code><br>
-      Species are rendered as normal text (not LaTeX). Lines starting with <code>#</code> are comments: rendered as text, not parsed as equations, and not equation-numbered.<br>
-      Load input TXT by clicking <code>Load TXT (handle also the case of pointing to other TXT files)</code>, select all related TXT files at once, then choose the main TXT and click <code>Load selected main file</code>. The main file is the file that starts to refer other files but no files refer it. It is the parent of all children files.
-    </div>
-    <div id="previewStatus" class="status up-to-date">Preview status: Up to date</div>
+  <div id="sidebarBackdrop" class="sidebar-backdrop" hidden></div>
 
-    <div class="editor">
-      <pre id="lineNumbers" class="line-numbers">1</pre>
-      <textarea id="input"># Demo: comment lines are rendered as text.
+  <aside id="appSidebar" class="app-sidebar" aria-hidden="true" aria-labelledby="sidebarTitle">
+    <div class="sidebar-header">
+      <h2 id="sidebarTitle" class="sidebar-title">Options</h2>
+      <button type="button" id="sidebarCloseBtn" class="sidebar-close-btn" aria-label="Close panel">×</button>
+    </div>
+    <div class="sidebar-body">
+      <div id="colorPanel" class="sidebar-panel dev-panel" data-sidebar-panel="colors">
+        <div class="row row--compact">
+          <label class="dev-field" for="coefficientColorInput">
+            Coefficient color
+            <input id="coefficientColorInput" type="color" value="#000000">
+          </label>
+          <label class="dev-field" for="commentColorInput">
+            Comment color
+            <input id="commentColorInput" type="color" value="#666666">
+          </label>
+          <label class="dev-field" for="equationNumberColorInput">
+            Equation number color
+            <input id="equationNumberColorInput" type="color" value="#000000">
+          </label>
+          <button type="button" id="resetDevColorsBtn">Reset Dev Colors</button>
+        </div>
+      </div>
+
+      <section id="pngTypographyPanel" class="sidebar-panel dev-typography-panel" data-sidebar-panel="typography" aria-labelledby="pngTypographyHeading">
+        <h2 id="pngTypographyHeading" class="dev-section-title">PNG typography</h2>
+        <p class="hint hint--small dev-typography-intro">
+          Fonts and sizes for the equation preview and exported PNG (typography feature).
+        </p>
+        <div id="pngTypographyControls" class="dev-typography-controls"></div>
+        <div class="row row--compact">
+          <button type="button" id="resetPngTypographyBtn">Reset typography defaults</button>
+        </div>
+      </section>
+
+      <div id="devPanel" class="sidebar-panel dev-panel" data-sidebar-panel="dev">
+        <div class="row row--compact">
+          <button id="loadTxtBtn">Load Reaction TXT</button>
+          <button id="multilineBtn">Multiline: On</button>
+          <button id="rmBlockBtn">Handle rM 3-line format: On</button>
+          <button id="alignArrowsBtn">Align equation arrows: Off</button>
+          <button id="stickLeftToArrowBtn">Left side stick to arrow: Off</button>
+          <button id="specialReactionBtn">Special reaction edge cases (not verified correctness yet): Off</button>
+        </div>
+        <p class="hint hint--small">
+          Align equation arrows and left-side stick apply to multiline render only.
+        </p>
+      </div>
+
+      <section id="nestedLoadPanel" class="sidebar-panel" data-sidebar-panel="nested">
+        <h2 class="dev-section-title">Load nested TXT</h2>
+        <p class="hint hint--small">Select all related <code>.txt</code> files, then choose the main file and confirm.</p>
+        <div class="row row--compact nested-root-row" id="nestedRootRow">
+          <label for="nestedRootSelect">Choose main TXT file:</label>
+          <select id="nestedRootSelect"></select>
+          <button type="button" id="confirmNestedRootBtn">Load selected main file</button>
+        </div>
+      </section>
+    </div>
+  </aside>
+
+  <div class="app-shell">
+    <div class="wrap app-main">
+      <h1>Text Reaction Renderer (Plain Text Species)</h1>
+      <div class="hint">
+        Format example: <code>r2_2, 100, 1, COONa, 1, Cu2+, k1, 1, COOCu+, 1, Na+</code><br>
+        Species are rendered as normal text (not LaTeX). Lines starting with <code>#</code> are comments: rendered as text, not parsed as equations, and not equation-numbered.<br>
+        Load input TXT by clicking <code>Load TXT (handle also the case of pointing to other TXT files)</code>, select all related TXT files at once, then choose the main TXT and click <code>Load selected main file</code>. The main file is the file that starts to refer other files but no files refer it. It is the parent of all children files.
+      </div>
+      <div id="previewStatus" class="status up-to-date">Preview status: Up to date</div>
+
+      <div class="editor">
+        <pre id="lineNumbers" class="line-numbers">1</pre>
+        <textarea id="input"># Demo: comment lines are rendered as text.
 # Use # for notes and section separators.
 # Equations below:
 r2_2, 100, 1, COONa, 1, Cu2+, k1, 1, COOCu+, 1, Na+
@@ -28,59 +91,27 @@ r2_1, 102, 2, X, 1, Y, 0.5, 1, Z
 rM,   120::, 1, l::, 1, m::, 1, n::, 1, en_Y::
              1e6
              1, q::, 1, en_Y::</textarea>
-    </div>
-
-    <div class="row">
-      <button class="primary" id="renderBtn">Render</button>
-      <button id="exportBtn">Export PNG</button>
-      <button id="resetBtn">Reset Example</button>
-      <button id="equationNumbersBtn">Show equation numbers: Off</button>
-      <button id="commentAlignBtn">Comment align: Left</button>
-      <button id="colorCustomizationBtn">Color customization</button>
-      <button id="loadNestedTxtBtn">Load TXT (handle also the case of pointing to other TXT files)</button>
-      <input id="txtFileInput" type="file" accept=".txt,text/plain" hidden>
-      <input id="nestedTxtFileInput" type="file" accept=".txt,text/plain" multiple hidden>
-    </div>
-    <div id="colorPanel" class="dev-panel">
-      <div class="row row--compact">
-        <label class="dev-field" for="coefficientColorInput">
-          Coefficient color
-          <input id="coefficientColorInput" type="color" value="#000000">
-        </label>
-        <label class="dev-field" for="commentColorInput">
-          Comment color
-          <input id="commentColorInput" type="color" value="#666666">
-        </label>
-        <label class="dev-field" for="equationNumberColorInput">
-          Equation number color
-          <input id="equationNumberColorInput" type="color" value="#000000">
-        </label>
-        <button id="resetDevColorsBtn">Reset Dev Colors</button>
       </div>
-    </div>
-    <div id="devPanel" class="dev-panel">
-      <div class="row row--compact">
-        <button id="loadTxtBtn">Load Reaction TXT</button>
-        <button id="multilineBtn">Multiline: On</button>
-        <button id="rmBlockBtn">Handle rM 3-line format: On</button>
-        <button id="alignArrowsBtn">Align equation arrows: Off</button>
-        <button id="stickLeftToArrowBtn">Left side stick to arrow: Off</button>
-        <button id="specialReactionBtn">Special reaction edge cases (not verified correctness yet): Off</button>
-      </div>
-      <div class="hint hint--small">
-        Align equation arrows and left-side stick apply to multiline render only.
-      </div>
-    </div>
-    <div class="row row--compact nested-root-row" id="nestedRootRow">
-      <label for="nestedRootSelect">Choose main TXT file:</label>
-      <select id="nestedRootSelect"></select>
-      <button id="confirmNestedRootBtn">Load selected main file</button>
-    </div>
 
-    <div class="error" id="errorBox"></div>
+      <div class="row toolbar-main">
+        <button class="primary" id="renderBtn">Render</button>
+        <button id="exportBtn">Export PNG</button>
+        <button id="resetBtn">Reset Example</button>
+        <button id="equationNumbersBtn">Show equation numbers: Off</button>
+        <button id="commentAlignBtn">Comment align: Left</button>
+        <button id="colorCustomizationBtn" type="button" aria-expanded="false" aria-controls="colorPanel">Color customization: Off</button>
+        <button id="pngTypographyBtn" type="button" aria-expanded="false" aria-controls="pngTypographyPanel" hidden>PNG typography: Off</button>
+        <button id="devOnlyBtn" type="button" aria-expanded="false" aria-controls="devPanel">Dev tools: Off</button>
+        <button id="loadNestedTxtBtn" type="button" aria-expanded="false" aria-controls="nestedLoadPanel">Load TXT (handle also the case of pointing to other TXT files)</button>
+        <input id="txtFileInput" type="file" accept=".txt,text/plain" hidden>
+        <input id="nestedTxtFileInput" type="file" accept=".txt,text/plain" multiple hidden>
+      </div>
 
-    <div class="preview">
-      <canvas id="reactionCanvas" width="900" height="220"></canvas>
+      <div class="error" id="errorBox"></div>
+
+      <div class="preview preview--sticky">
+        <canvas id="reactionCanvas" width="900" height="220"></canvas>
+      </div>
     </div>
   </div>
 
@@ -88,6 +119,7 @@ rM,   120::, 1, l::, 1, m::, 1, n::, 1, en_Y::
   <script src="js/text-utils.js"></script>
   <script src="js/parse-reaction.js"></script>
   <script src="js/nns-file-io.js"></script>
+  <script src="js/sidebar-ui.js"></script>
   <script src="js/canvas-render.js"></script>
   <script src="js/app.js"></script>
 </body>
