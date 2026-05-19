@@ -112,27 +112,28 @@ For the full NNS input format, see [doi:10.1101/2023.08.10.552732](https://doi.o
 
 ## Release notes
 
-### Suggested release: **v1.1.0**
+### Release: **v1.0.0**
 
-**Rationale:** The page title already reads “Reaction Text to PNG v1.1”. There is no prior git tag; **v1.1.0** marks the first versioned release and matches that UI label. Changes since an informal v1.0 are mostly UX (toolbar controls, external CSS, documentation) rather than a breaking rewrite—appropriate for a minor bump.
+**Rationale ([SemVer](https://semver.org/)):** This is the **first tagged, production-ready release**. There is no prior public version or git tag. Per SemVer, **1.0.0** denotes the initial stable API/feature set—not a minor bump over an earlier 1.0.x line. Future **MINOR** releases add backward-compatible features; **PATCH** releases are bug fixes; **MAJOR** releases indicate incompatible changes.
 
-**Suggested GitHub release title:** `v1.1.0 — Toolbar controls and documentation`
+**Suggested GitHub release title:** `v1.0.0 — First stable release of NNS Reaction Renderer`
 
-**Suggested tag:** `v1.1.0`
+**Suggested tag:** `v1.0.0`
 
 **Suggested changelog (for GitHub release body):**
 
-- Moved **Align equation arrows**, **Left side stick to arrow**, and **Special reaction edge cases** from Dev tools to the **left toolbar**, with a multiline-only hint beside them.
-- Added **Comment align** and **Show equation numbers** on the toolbar for quicker access.
-- Split styles into `css/nns-reaction-renderer.css`; README documents UI layout, features, and `InputExample/` paths.
-- Dev tools panel retains multiline, rM parsing, single-file TXT load, and standalone HTML export.
+- **Core purpose** — Render Binomial NNS reaction lines as PNG equation images (plain-text species, no LaTeX); companion to the [Binomial NNS simulator](https://doi.org/10.1101/2023.08.10.552732), render-only (no simulation).
+- **UI** — Left toolbar for Render, Export PNG, Reset, equation numbers, comment alignment, multiline arrow alignment, left-side stick, special-case toggles, color customization, Dev tools, PNG typography, and nested TXT load; detail side panels for colors, dev options, nested file picker, and typography.
+- **Parsing and rendering** — Standard NNS comma-separated lines, `#` comments, multiline stacked PNG, `rM` three-line blocks, optional special reaction edge cases (`r1_+`, `r1_-`, `r+-=`), layout and typography options.
+- **File I/O** — Single-file `*Reaction` TXT load (Dev tools); nested multi-file TXT with main-file selection (toolbar).
+- **Standalone export** — Bundle CSS/JS into one HTML file for client distribution (Dev tools).
+- **Static, zero-dependency app** — Open `NNSReactionRenderer.html` in a browser; no install, build step, or server required for daily use.
 
 ### Version history
 
 | Version | Notes |
 |---------|--------|
-| **v1.1.0** | Toolbar layout for multiline alignment and special-case toggles; README and CSS structure update (this release). |
-| *(unreleased)* | Earlier single-file HTML workflow; nested TXT loading and PNG typography added incrementally. |
+| **v1.0.0** | First stable public release: full renderer, toolbar UI, file I/O, standalone export, and documentation. |
 
 ## Authors
 
