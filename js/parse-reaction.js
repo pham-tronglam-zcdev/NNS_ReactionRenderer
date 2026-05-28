@@ -38,6 +38,91 @@ function parseReaction(line, options = {}) {
   return { reactants, rate, products, operator: "->", showRate: true };
 }
 
+
+function parseSpeciesPairsFromTokens(tokens, startIdx, contextLabel) {
+  if (tokens.length < startIdx + 2) throw new Error(`No ${contextLabel} found.`);
+  if ((tokens.length - startIdx) % 2 !== 0) {
+    throw new Error(`${contextLabel} must be coefficient/name pairs.`);
+  }
+  const species = [];
+  for (let i = startIdx; i < tokens.length; i += 2) {
+    const coeff = tokens[i];
+    const name = tokens[i + 1];
+    if (coeff === undefined || name === undefined) {
+      throw new Error(`Incomplete ${contextLabel} pair in input.`);
+    }
+    species.push({ coeff, name });
+  }
+  return species;
+}
+
+function isRateChangeBlockHeader(trimmed) {
+  return trimmed.startsWith("rC,") || trimmed.startsWith("rA,") || trimmed.startsWith("rT,");
+}
+
+function parseRcReactionBlock(headerLine, rateLine, productLine) {
+  const headerTokens = cleanCsvTokens(headerLine);
+  if (headerTokens[0] !== "rC") throw new Error("rC header must start with rC.");
+  const reactants = parseSpeciesPairsFromTokens(headerTokens, 2, "reactants");
+  if (reactants.length === 0) throw new Error("No reactants found in rC header line.");
+  const rateTokens = cleanCsvTokens(rateLine);
+  if (rateTokens.length < 2 || rateTokens.length % 2 !== 0) {
+    throw new Error("rC rate line must contain even-count (time, k) pairs.");
+  }
+  const products = parseSpeciesPairsFromTokens(cleanCsvTokens(productLine), 0, "products");
+  if (products.length === 0) throw new Error("No products found in rC product line.");
+  return { reactants, rate: "", products, operator: "->", showRate: true, reactionKind: "rC" };
+}
+
+function parseRaReactionBlock(headerLine, rateLine, productLine) {
+  const headerTokens = cleanCsvTokens(headerLine);
+  if (headerTokens[0] !== "rA") throw new Error("rA header must start with rA.");
+  const reactants = parseSpeciesPairsFromTokens(headerTokens, 2, "reactants");
+  if (reactants.length === 0) throw new Error("No reactants found in rA header line.");
+  const rateTokens = cleanCsvTokens(rateLine);
+  if (rateTokens.length < 4 || rateTokens.length % 4 !== 0) {
+    throw new Error("rA rate line must contain (time, A, E, T) quadruplets.");
+  }
+  const products = parseSpeciesPairsFromTokens(cleanCsvTokens(productLine), 0, "products");
+  if (products.length === 0) throw new Error("No products found in rA product line.");
+  return { reactants, rate: "", products, operator: "->", showRate: true, reactionKind: "rA" };
+}
+
+function parseRtReactionBlock(headerLine, rateLine, productLine) {
+  const headerTokens = cleanCsvTokens(headerLine);
+  if (headerTokens[0] !== "rT") throw new Error("rT header must start with rT.");
+  const reactants = parseSpeciesPairsFromTokens(headerTokens, 2, "reactants");
+  if (reactants.length === 0) throw new Error("No reactants found in rT header line.");
+  const rateTokens = cleanCsvTokens(rateLine);
+  if (rateTokens.length !== 4) {
+    throw new Error('rT rate line must be: arrhenius, A, E, <CALORIC_name>.');
+  }
+  if (rateTokens[0].toLowerCase() !== "arrhenius") {
+    throw new Error('rT rate line must start with keyword "arrhenius".');
+  }
+  const caloricName = rateTokens[3];
+  if (!caloricName) throw new Error("rT rate line is missing CALORIC element name.");
+  const products = parseSpeciesPairsFromTokens(cleanCsvTokens(productLine), 0, "products");
+  if (products.length === 0) throw new Error("No products found in rT product line.");
+  return {
+    reactants,
+    rate: "",
+    products,
+    operator: "->",
+    showRate: true,
+    reactionKind: "rT",
+    caloricSource: caloricName
+  };
+}
+
+function parseRateChangeReactionBlock(headerLine, rateLine, productLine) {
+  const type = cleanCsvTokens(headerLine)[0];
+  if (type === "rC") return parseRcReactionBlock(headerLine, rateLine, productLine);
+  if (type === "rA") return parseRaReactionBlock(headerLine, rateLine, productLine);
+  if (type === "rT") return parseRtReactionBlock(headerLine, rateLine, productLine);
+  throw new Error(`Unsupported rate-change reaction type: ${type}`);
+}
+
 function parseRmReactionBlock(headerLine, rateLine, productLine) {
   const headerTokens = cleanCsvTokens(headerLine);
   if (headerTokens.length < 4) throw new Error("rM header line is incomplete.");
@@ -87,11 +172,27 @@ function parseR1Minus(tokens) {
 
 function parseRPlusMinusEqual(tokens) {
   const body = tokens.slice(2);
-  if (body.length < 4 || body.length % 2 !== 0) throw new Error("r+-= expects coefficient/name pairs with at least one left pair and one right pair.");
-  const pairs = [];
-  for (let i = 0; i < body.length; i += 2) pairs.push({ coeff: body[i], name: body[i + 1] });
-  if (pairs.length < 2) throw new Error("r+-= requires at least one source pair and one target pair.");
-  return { reactants: pairs.slice(0, -1), products: [pairs[pairs.length - 1]], rate: "", operator: "=", showRate: false };
+  const eqIdx = body.indexOf("=");
+  const leftBody = eqIdx === -1 ? body.slice(0, -2) : body.slice(0, eqIdx);
+  const rightBody = eqIdx === -1 ? body.slice(-2) : body.slice(eqIdx + 1);
+  if (leftBody.length < 2 || leftBody.length % 2 !== 0) {
+    throw new Error("r+-= left side must be coefficient/name pairs.");
+  }
+  if (rightBody.length < 2 || rightBody.length % 2 !== 0) {
+    throw new Error("r+-= right side must be coefficient/name pairs.");
+  }
+  const reactants = [];
+  for (let i = 0; i < leftBody.length; i += 2) {
+    reactants.push({ coeff: leftBody[i], name: leftBody[i + 1] });
+  }
+  const products = [];
+  for (let i = 0; i < rightBody.length; i += 2) {
+    products.push({ coeff: rightBody[i], name: rightBody[i + 1] });
+  }
+  if (reactants.length === 0 || products.length === 0) {
+    throw new Error("r+-= requires at least one reactant pair and one product pair.");
+  }
+  return { reactants, products, rate: "", operator: "=", showRate: false };
 }
 
 function classifyReactionInputLines(lines, rmBlockEnabled) {
@@ -101,17 +202,38 @@ function classifyReactionInputLines(lines, rmBlockEnabled) {
     if (!trimmed) continue;
     if (trimmed.startsWith("#")) { rows.push({ kind: "comment", text: trimmed }); continue; }
     const isRmHeader = trimmed.startsWith("rM,");
-    if (rmBlockEnabled && isRmHeader) {
+    const isRateChangeHeader = isRateChangeBlockHeader(trimmed);
+    if ((rmBlockEnabled && isRmHeader) || isRateChangeHeader) {
       const rateLine = lines[i + 1];
       const productLine = lines[i + 2];
-      if (!rateLine || !productLine) throw new Error(`Line ${i + 1}: rM block is incomplete (needs 3 lines).`);
-      rows.push({ kind: "equation", lineNumber: i + 1, line: trimmed, rmBlock: { headerLine: trimmed, rateLine: rateLine.trim(), productLine: productLine.trim() } });
+      const blockKind = isRateChangeHeader ? "rateChange" : "rM";
+      if (!rateLine || !productLine) {
+        throw new Error(`Line ${i + 1}: ${blockKind} block is incomplete (needs 3 lines).`);
+      }
+      rows.push({
+        kind: "equation",
+        lineNumber: i + 1,
+        line: trimmed,
+        threeLineBlock: {
+          kind: blockKind,
+          headerLine: trimmed,
+          rateLine: rateLine.trim(),
+          productLine: productLine.trim()
+        }
+      });
       i += 2;
       continue;
     }
     rows.push({ kind: "equation", lineNumber: i + 1, line: trimmed });
   }
   return rows;
+}
+
+function parseThreeLineReactionBlock(block) {
+  if (block.kind === "rM") {
+    return parseRmReactionBlock(block.headerLine, block.rateLine, block.productLine);
+  }
+  return parseRateChangeReactionBlock(block.headerLine, block.rateLine, block.productLine);
 }
 
 function parseRenderableRows(lines, rmBlockEnabled, options = {}) {
@@ -121,8 +243,8 @@ function parseRenderableRows(lines, rmBlockEnabled, options = {}) {
     try {
       rows.push({
         kind: "equation",
-        model: row.rmBlock
-          ? parseRmReactionBlock(row.rmBlock.headerLine, row.rmBlock.rateLine, row.rmBlock.productLine)
+        model: row.threeLineBlock
+          ? parseThreeLineReactionBlock(row.threeLineBlock)
           : parseReaction(row.line, options)
       });
     } catch (e) {
@@ -135,8 +257,8 @@ function parseRenderableRows(lines, rmBlockEnabled, options = {}) {
 function parseFirstReactionFromLines(lines, rmBlockEnabled, options = {}) {
   const firstEquationRow = classifyReactionInputLines(lines, rmBlockEnabled).find(r => r.kind === "equation");
   if (!firstEquationRow) throw new Error("No reaction line found.");
-  if (firstEquationRow.rmBlock) {
-    return parseRmReactionBlock(firstEquationRow.rmBlock.headerLine, firstEquationRow.rmBlock.rateLine, firstEquationRow.rmBlock.productLine);
+  if (firstEquationRow.threeLineBlock) {
+    return parseThreeLineReactionBlock(firstEquationRow.threeLineBlock);
   }
   return parseReaction(firstEquationRow.line, options);
 }
