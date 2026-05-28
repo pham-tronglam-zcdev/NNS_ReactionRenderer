@@ -38,8 +38,6 @@ function parseReaction(line, options = {}) {
   return { reactants, rate, products, operator: "->", showRate: true };
 }
 
-const RATE_LABEL_RC = "k(t)";
-const RATE_LABEL_RA = "A·exp(-E/T(t))";
 
 function parseSpeciesPairsFromTokens(tokens, startIdx, contextLabel) {
   if (tokens.length < startIdx + 2) throw new Error(`No ${contextLabel} found.`);
@@ -58,10 +56,6 @@ function parseSpeciesPairsFromTokens(tokens, startIdx, contextLabel) {
   return species;
 }
 
-function formatRtRateLabel(caloricName) {
-  return `A·exp(-E/T_${caloricName})`;
-}
-
 function isRateChangeBlockHeader(trimmed) {
   return trimmed.startsWith("rC,") || trimmed.startsWith("rA,") || trimmed.startsWith("rT,");
 }
@@ -77,7 +71,7 @@ function parseRcReactionBlock(headerLine, rateLine, productLine) {
   }
   const products = parseSpeciesPairsFromTokens(cleanCsvTokens(productLine), 0, "products");
   if (products.length === 0) throw new Error("No products found in rC product line.");
-  return { reactants, rate: RATE_LABEL_RC, products, operator: "->", showRate: true, reactionKind: "rC" };
+  return { reactants, rate: "", products, operator: "->", showRate: true, reactionKind: "rC" };
 }
 
 function parseRaReactionBlock(headerLine, rateLine, productLine) {
@@ -91,7 +85,7 @@ function parseRaReactionBlock(headerLine, rateLine, productLine) {
   }
   const products = parseSpeciesPairsFromTokens(cleanCsvTokens(productLine), 0, "products");
   if (products.length === 0) throw new Error("No products found in rA product line.");
-  return { reactants, rate: RATE_LABEL_RA, products, operator: "->", showRate: true, reactionKind: "rA" };
+  return { reactants, rate: "", products, operator: "->", showRate: true, reactionKind: "rA" };
 }
 
 function parseRtReactionBlock(headerLine, rateLine, productLine) {
@@ -112,7 +106,7 @@ function parseRtReactionBlock(headerLine, rateLine, productLine) {
   if (products.length === 0) throw new Error("No products found in rT product line.");
   return {
     reactants,
-    rate: formatRtRateLabel(caloricName),
+    rate: "",
     products,
     operator: "->",
     showRate: true,
