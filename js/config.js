@@ -1,5 +1,5 @@
 /** @typedef {{ coeff: string, name: string }} SpeciesSide */
-/** @typedef {{ reactants: SpeciesSide[], rate: string, products: SpeciesSide[], operator?: string, showRate?: boolean }} ReactionModel */
+/** @typedef {{ reactants: SpeciesSide[], rate: string, products: SpeciesSide[], operator?: string, showRate?: boolean, reactionKind?: string, caloricSource?: string }} ReactionModel */
 
 const DEFAULT_INPUT = `# Demo: comment lines are rendered as text.
 # Use # for notes and section separators.
