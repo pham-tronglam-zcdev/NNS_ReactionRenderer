@@ -1,0 +1,250 @@
+# ============================================================================
+# NNS Reaction Renderer — Display Design for Arrow Labels
+# ============================================================================
+# This file specifies how each reaction type should be visually rendered
+# in the PNG output of the NNS Reaction Renderer.
+#
+# Goal: a reader can immediately identify the CATEGORY of each reaction
+# by looking at the label on/above the reaction arrow.
+# The label is for categorization only — do NOT show all intermediate
+# k values, time points, or parameter schedules.
+# ============================================================================
+
+
+# ============================================================================
+# GENERAL LAYOUT
+# ============================================================================
+#
+# Each reaction is rendered as:
+#
+#   [reactants]  ──── label ────>  [products]
+#
+# Reactants/products format:
+#   coeff·Species + coeff·Species + ...
+#
+# Rules:
+#   - If coeff == 1, omit it entirely.
+#     Example:  1*A + 1*B  ->  A + B
+#
+#   - If coeff is a power of 10 (1e8, 1e10, etc.), render as superscript.
+#     Example:  1e8*A  ->  10⁸·A
+#
+#   - If coeff is a plain integer (100, 50000), render as-is.
+#     Example:  100*A3  ->  100·A3
+#
+#   - Use "+" to join multiple species.
+#
+#   - Use a right arrow for the reaction direction.
+#     Preferred: long arrow with label above it.
+#     LaTeX: \xrightarrow{label}
+#     Unicode fallback: →
+#
+# Arrow label:
+#   - Rendered ABOVE the arrow (or inside if space allows).
+#   - Font size: smaller than species names.
+#   - Color: distinct from species text.
+#     Recommended: dark gray (#555555) or dark red (#8B0000).
+#   - Use LaTeX-style math rendering if available.
+
+
+# ============================================================================
+# TYPE: Standard Reaction  (r2_1, r2_2, r3_1, rM, etc.)
+# ============================================================================
+#
+# Detection:
+#   Line starts with r followed by digits and underscores (r2_1, r2_2, r3_1)
+#   OR starts with rM
+#   Defined under *Reaction section (single-line or multi-line).
+#
+# Arrow label:
+#   k = <value>
+#
+# If <value> is a power of 10, render with superscript.
+#
+# --- EXAMPLE ---
+# Input:  r2_2, 10, 1e8, A, 1e7, B, 1e5, 1, C, 1e10, CALORIC_01
+# Render:
+#
+#   10⁸·A + 10⁷·B  ──k = 10⁵──>  C + 10¹⁰·CALORIC_01
+#
+# LaTeX:
+#   10^{8} \cdot A + 10^{7} \cdot B
+#     \xrightarrow{k = 10^{5}}
+#   C + 10^{10} \cdot \text{CALORIC\_01}
+
+
+# ============================================================================
+# TYPE: r+-=  (Caloric transfer / combination)
+# ============================================================================
+#
+# Detection:
+#   Line starts with "r+-="
+#   The rate constant position contains "=" instead of a number.
+#
+# Arrow label:
+#   (none, or "=" symbol)
+#
+# Use a double-headed arrow or equals sign to indicate this is an
+# instantaneous combination, not a rate-governed reaction.
+#
+# --- EXAMPLE ---
+# Input:  r+-=, 30, 1, CALORIC_01, 1, CALORIC_03, =, 1, CALORIC
+# Render:
+#
+#   CALORIC_01 + CALORIC_03  ══>  CALORIC
+#
+# Alternative renders:
+#   CALORIC_01 + CALORIC_03  ⇒  CALORIC
+#   CALORIC_01 + CALORIC_03  ──[=]──>  CALORIC
+#
+# LaTeX:
+#   \text{CALORIC\_01} + \text{CALORIC\_03}
+#     \xRightarrow{\;=\;}
+#   \text{CALORIC}
+
+
+# ============================================================================
+# TYPE: rC  —  Piecewise-Linear Time-Dependent k
+# ============================================================================
+#
+# Detection:
+#   Line 1 starts with "rC"
+#   Found under *ReactionRateChange section.
+#   Line 2 contains only numeric pairs (no "arrhenius" keyword).
+#
+# Arrow label:
+#   k(t)
+#
+# This immediately tells the reader: "rate constant is a scheduled
+# function of time (not constant, not temperature-dependent)."
+#
+# --- EXAMPLE ---
+# Input:
+#   rC, 120, 1e2, A3, 1e1, B3, 1e9, CALORIC_03
+#    0, 1e0, 1000, 1e-1, 10000, 1e1
+#    1, C3
+#
+# Render:
+#
+#   10²·A3 + 10·B3 + 10⁹·CALORIC_03  ──k(t)──>  C3
+#
+# LaTeX:
+#   10^{2} \cdot A3 + 10 \cdot B3 + 10^{9} \cdot \text{CALORIC\_03}
+#     \xrightarrow{k(t)}
+#   C3
+
+
+# ============================================================================
+# TYPE: rA  —  Arrhenius with Time-Scheduled Parameters
+# ============================================================================
+#
+# Detection:
+#   Line 1 starts with "rA"
+#   Found under *ReactionRateChange section.
+#   Line 2 contains only numeric quadruplets (no "arrhenius" keyword).
+#
+# Arrow label:
+#   A·exp(-E/T(t))
+#
+# The "T(t)" signals: temperature is USER-SCHEDULED over time,
+# not computed from the simulation. This distinguishes rA from rT.
+#
+# --- EXAMPLE ---
+# Input:
+#   rA, 110, 1, A2, 1, B2
+#    0, 0.1, 1000, 273, 1e3, 0.1, 1000, 320, 3e3, 0.1, 1000, 350, 1e4, 0.1, 1000, 220
+#    1, C2
+#
+# Render:
+#
+#   A2 + B2  ──A·exp(-E/T(t))──>  C2
+#
+# LaTeX:
+#   A2 + B2
+#     \xrightarrow{A \cdot e^{-E/T(t)}}
+#   C2
+
+
+# ============================================================================
+# TYPE: rT  —  Dynamic Temperature-Dependent k (from CALORIC)
+# ============================================================================
+#
+# Detection:
+#   Line 1 starts with "rT"
+#   Found under *ReactionRateChange section.
+#   Line 2 starts with the keyword "arrhenius".
+#
+# Arrow label:
+#   A·exp(-E/T_{CALORIC_NAME})
+#
+# where CALORIC_NAME is token[3] from line 2 (the name of the
+# *ElementCaloric element that provides the live temperature).
+#
+# The subscript on T tells the reader: "temperature is dynamically
+# computed from this specific Caloric element at each step."
+# This is the KEY visual distinction from rA.
+#
+# --- EXAMPLE ---
+# Input:
+#   rT, 200, 1, A4, 1, B4
+#    arrhenius, 1e-5, 10, CALORIC
+#    1, C4
+#
+# Render:
+#
+#   A4 + B4  ──A·exp(-E/T_CALORIC)──>  C4
+#
+# The subscript "CALORIC" comes from token[3] of line 2.
+# If the source were "CALORIC_01", render as T_{CALORIC_01}.
+#
+# LaTeX:
+#   A4 + B4
+#     \xrightarrow{A \cdot e^{-E / T_{\text{CALORIC}}}}
+#   C4
+
+
+# ============================================================================
+# QUICK REFERENCE TABLE
+# ============================================================================
+#
+# Type       | Arrow Label                  | Reader Understands
+# -----------|------------------------------|-----------------------------------
+# standard   | k = <value>                  | constant rate
+# r+-=       | = (or double arrow)          | instantaneous caloric transfer
+# rC         | k(t)                         | rate scheduled over time
+# rA         | A·exp(-E/T(t))               | Arrhenius, prescribed temperature
+# rT         | A·exp(-E/T_{CALORIC_NAME})   | Arrhenius, live temperature
+#
+# Visual priority:
+#   rT is the most "interesting" — highlight with the Caloric source name.
+#   rA shows T(t) — user-controlled, less dynamic.
+#   rC is simplest rate-change — just k(t).
+#   Standard is just a number.
+
+
+# ============================================================================
+# COEFFICIENT RENDERING RULES
+# ============================================================================
+#
+# Input         | Rendered as
+# --------------|------------
+# 1             | (omitted)
+# 1e0 or 1.0    | (omitted)
+# 1e1 or 10     | 10
+# 1e2 or 100    | 10²
+# 1e3 or 1000   | 10³
+# 1e7           | 10⁷
+# 1e8           | 10⁸
+# 1e9           | 10⁹
+# 1e10          | 10¹⁰
+# 1e12          | 10¹²
+# 50000         | 50000  (not a clean power of 10, render as-is)
+# 273.15e9      | 273.15×10⁹  (for Caloric initial values in *ElementCaloric)
+#
+# Use the centered dot "·" between coefficient and species name.
+# Example: 10⁸·A
+
+
+# ============================================================================
+# END OF DISPLAY DESIGN
+# ============================================================================
