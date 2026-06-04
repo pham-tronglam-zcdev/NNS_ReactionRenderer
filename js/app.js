@@ -470,7 +470,15 @@ function syncControlLabels() {
   syncSidebarUiState();
 }
 
+function applyAppVersionToUi() {
+  if (typeof APP_VERSION === "undefined") return;
+  document.title = `Reaction Text to PNG v${APP_VERSION}`;
+  const titleEl = document.querySelector(".toolbar-sidebar-title .app-version");
+  if (titleEl) titleEl.textContent = `v${APP_VERSION}`;
+}
+
 function initApp() {
+  applyAppVersionToUi();
   appState.pngFontStyles = createDefaultPngFontStyles();
   buildPngTypographyPanel();
   initSidebarUi();

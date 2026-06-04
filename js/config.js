@@ -1,3 +1,6 @@
+/** Application version (semver). */
+const APP_VERSION = "1.1.0";
+
 /** @typedef {{ coeff: string, name: string }} SpeciesSide */
 /** @typedef {{ reactants: SpeciesSide[], rate: string, products: SpeciesSide[], operator?: string, showRate?: boolean, reactionKind?: string, caloricSource?: string }} ReactionModel */
 
