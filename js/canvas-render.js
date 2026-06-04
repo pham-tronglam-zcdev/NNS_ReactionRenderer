@@ -18,86 +18,12 @@ function formatCommentText(commentText) {
 function formatReactionRateLabel(model) {
   if (!model || model.showRate === false) return "";
   if (model.reactionKind === "rC") return "k(t)";
-  if (model.reactionKind === "rA") return "A·exp(-E/T(t))";
+  if (model.reactionKind === "rA") return "A(t)·exp(-E(t)/T(t))";
   if (model.reactionKind === "rT") {
     const source = model.caloricSource || "CALORIC";
-    return `A·exp(-E/T_${source})`;
+    return `A·exp(-E/T(${source}))`;
   }
   return String(model.rate ?? "");
-}
-
-const RATE_SUBSCRIPT_PATTERNS = [
-  { re: /^k\(t\)/, expand: () => [{ kind: "normal", text: "k" }, { kind: "sub", text: "t" }] },
-  { re: /^T\(([^)]+)\)/, expand: (m) => [{ kind: "normal", text: "T" }, { kind: "sub", text: m[1] }] },
-  { re: /^T_([A-Za-z0-9_]+)/, expand: (m) => [{ kind: "normal", text: "T" }, { kind: "sub", text: m[1] }] }
-];
-
-function parseRateLabelSegments(label) {
-  const segments = [];
-  let rest = String(label || "");
-  while (rest.length > 0) {
-    let matched = false;
-    for (const pattern of RATE_SUBSCRIPT_PATTERNS) {
-      const m = rest.match(pattern.re);
-      if (!m) continue;
-      segments.push(...pattern.expand(m));
-      rest = rest.slice(m[0].length);
-      matched = true;
-      break;
-    }
-    if (matched) continue;
-    const nextSpecial = rest.search(/k\(t\)|T\(|T_/);
-    const end = nextSpecial === -1 ? rest.length : nextSpecial;
-    if (end > 0) segments.push({ kind: "normal", text: rest.slice(0, end) });
-    rest = rest.slice(end);
-    if (nextSpecial === 0) {
-      segments.push({ kind: "normal", text: rest[0] });
-      rest = rest.slice(1);
-    }
-  }
-  return segments.length > 0 ? segments : [{ kind: "normal", text: String(label || "") }];
-}
-
-function parseRateFontPx(rateFont) {
-  const m = String(rateFont).match(/^(\d+(?:\.\d+)?)px/);
-  return m ? Number(m[1]) : 18;
-}
-
-function parseRateFontFamily(rateFont) {
-  const m = String(rateFont).match(/"([^"]+)"/);
-  return m ? m[1] : "Arial";
-}
-
-function buildSubRateFont(rateFont) {
-  const basePx = parseRateFontPx(rateFont);
-  const subPx = Math.max(8, Math.round(basePx * 0.62));
-  return `bold ${buildCanvasFont(subPx, parseRateFontFamily(rateFont))}`;
-}
-
-function rateLabelSubscriptDrop(rateFont) {
-  return Math.max(3, Math.round(parseRateFontPx(rateFont) * 0.28));
-}
-
-function measureRateLabelWidth(ctx, segments, rateFont, subFont) {
-  let width = 0;
-  for (const seg of segments) {
-    ctx.font = seg.kind === "sub" ? subFont : rateFont;
-    width += ctx.measureText(seg.text).width;
-  }
-  return width;
-}
-
-function drawRateLabel(ctx, segments, x, y, rateFont, subFont, fillStyle) {
-  const subDrop = rateLabelSubscriptDrop(rateFont);
-  let cursorX = x;
-  ctx.fillStyle = fillStyle;
-  for (const seg of segments) {
-    const isSub = seg.kind === "sub";
-    ctx.font = isSub ? subFont : rateFont;
-    const drawY = isSub ? y + subDrop : y;
-    ctx.fillText(seg.text, cursorX, drawY);
-    cursorX += ctx.measureText(seg.text).width;
-  }
 }
 
 function drawSpeciesWithCoefficientColor(ctx, side, x, y, colors, fonts) {
@@ -125,8 +51,6 @@ function drawSpeciesWithCoefficientColor(ctx, side, x, y, colors, fonts) {
 function calcReactionLayout(model, ctx, showEquationNumbers, fonts) {
   const normalizedModel = normalizeReactionModelForRender(model);
   const rateLabel = formatReactionRateLabel(normalizedModel);
-  const rateLabelSegments = parseRateLabelSegments(rateLabel);
-  const subRateFont = buildSubRateFont(fonts.rate);
   const left = formatSpecies(normalizedModel.reactants);
   const right = formatSpecies(normalizedModel.products);
   const padX = 6;
@@ -135,9 +59,8 @@ function calcReactionLayout(model, ctx, showEquationNumbers, fonts) {
   ctx.font = fonts.species;
   const leftW = ctx.measureText(left).width;
   const rightW = ctx.measureText(right).width;
-  const rateW = normalizedModel.showRate
-    ? measureRateLabelWidth(ctx, rateLabelSegments, fonts.rate, subRateFont)
-    : 0;
+  ctx.font = fonts.rate;
+  const rateW = normalizedModel.showRate ? ctx.measureText(rateLabel).width : 0;
   const arrowStartX = padX + leftW + 20;
   const arrowEndX = arrowStartX + Math.max(120, rateW + 50);
   const neededWidth = Math.ceil(arrowEndX + arrowGap + rightW + padX + numberColumnWidth);
@@ -146,8 +69,6 @@ function calcReactionLayout(model, ctx, showEquationNumbers, fonts) {
     right,
     rateW,
     rateLabel,
-    rateLabelSegments,
-    subRateFont,
     arrowStartX,
     arrowEndX,
     neededWidth,
@@ -183,16 +104,10 @@ function drawReactionLine(ctx, layout, yOffset, equationNumber, model, options =
     ctx.stroke();
   }
   if (layout.showRate) {
+    ctx.font = fonts.rate;
+    ctx.fillStyle = "#333";
     const rateX = layout.arrowStartX + (layout.arrowEndX - layout.arrowStartX - layout.rateW) / 2;
-    drawRateLabel(
-      ctx,
-      layout.rateLabelSegments,
-      rateX,
-      y - 12,
-      fonts.rate,
-      layout.subRateFont,
-      "#333"
-    );
+    ctx.fillText(layout.rateLabel, rateX, y - 12);
   }
   drawSpeciesWithCoefficientColor(
     ctx, normalizedModel.products, layout.arrowEndX + 24, yOffset + baselineY + padY,
