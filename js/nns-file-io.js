@@ -1,41 +1,19 @@
 function extractReactionSectionLines(fileText) {
-  return extractRenderableReactionLines(fileText);
-}
-
-function extractRenderableReactionLines(fileText) {
   const rawLines = fileText.split(/\r?\n/);
+  let inReaction = false;
   const sectionLines = [];
-  let activeSection = null;
-  let sawReaction = false;
-  let sawRateChange = false;
-
   for (const raw of rawLines) {
     const trimmed = raw.trim();
-    if (trimmed.startsWith("*ReactionRateChange")) {
-      activeSection = "rateChange";
-      sawRateChange = true;
+    if (!inReaction) {
+      if (trimmed.startsWith("*Reaction")) inReaction = true;
       continue;
     }
-    if (/^\*Reaction\b/.test(trimmed)) {
-      activeSection = "reaction";
-      sawReaction = true;
-      continue;
-    }
-    if (trimmed.startsWith("*")) {
-      activeSection = null;
-      continue;
-    }
-    if (!activeSection) continue;
+    if (trimmed.startsWith("*")) break;
     if (!trimmed || trimmed.startsWith("#") || trimmed.startsWith("**")) continue;
-    sectionLines.push(trimmed);
+    sectionLines.push(raw.trim());
   }
-
-  if (!sawReaction && !sawRateChange) {
-    throw new Error("No *Reaction or *ReactionRateChange section found in file.");
-  }
-  if (sectionLines.length === 0) {
-    throw new Error("Reaction sections were found, but they contain no renderable lines.");
-  }
+  if (!inReaction) throw new Error("No *Reaction section found in file.");
+  if (sectionLines.length === 0) throw new Error("*Reaction section was found, but it has no reaction lines.");
   return sectionLines;
 }
 

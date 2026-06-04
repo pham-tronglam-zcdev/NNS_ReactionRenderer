@@ -15,17 +15,6 @@ function formatCommentText(commentText) {
   return text.startsWith("#") ? text.slice(1).trimStart() : text;
 }
 
-function formatReactionRateLabel(model) {
-  if (!model || model.showRate === false) return "";
-  if (model.reactionKind === "rC") return "k(t)";
-  if (model.reactionKind === "rA") return "A(t)·exp(-E(t)/T(t))";
-  if (model.reactionKind === "rT") {
-    const source = model.caloricSource || "CALORIC";
-    return `A·exp(-E/T(${source}))`;
-  }
-  return String(model.rate ?? "");
-}
-
 function drawSpeciesWithCoefficientColor(ctx, side, x, y, colors, fonts) {
   const coefficientColor = colors.coefficientColor || "#000000";
   const speciesColor = colors.speciesColor || "#222";
@@ -50,7 +39,6 @@ function drawSpeciesWithCoefficientColor(ctx, side, x, y, colors, fonts) {
 
 function calcReactionLayout(model, ctx, showEquationNumbers, fonts) {
   const normalizedModel = normalizeReactionModelForRender(model);
-  const rateLabel = formatReactionRateLabel(normalizedModel);
   const left = formatSpecies(normalizedModel.reactants);
   const right = formatSpecies(normalizedModel.products);
   const padX = 6;
@@ -59,25 +47,14 @@ function calcReactionLayout(model, ctx, showEquationNumbers, fonts) {
   ctx.font = fonts.species;
   const leftW = ctx.measureText(left).width;
   const rightW = ctx.measureText(right).width;
-  ctx.font = fonts.rate;
-  const rateW = normalizedModel.showRate ? ctx.measureText(rateLabel).width : 0;
+  const rateW = normalizedModel.showRate ? ctx.measureText(String(normalizedModel.rate)).width : 0;
   const arrowStartX = padX + leftW + 20;
   const arrowEndX = arrowStartX + Math.max(120, rateW + 50);
   const neededWidth = Math.ceil(arrowEndX + arrowGap + rightW + padX + numberColumnWidth);
-  return {
-    left,
-    right,
-    rateW,
-    rateLabel,
-    arrowStartX,
-    arrowEndX,
-    neededWidth,
-    operator: normalizedModel.operator,
-    showRate: normalizedModel.showRate
-  };
+  return { left, right, rateW, arrowStartX, arrowEndX, neededWidth, operator: normalizedModel.operator, showRate: normalizedModel.showRate };
 }
 
-function drawReactionLine(ctx, layout, yOffset, equationNumber, model, options = {}) {
+function drawReactionLine(ctx, layout, rate, yOffset, equationNumber, model, options = {}) {
   const fonts = options.fonts || resolvePngFonts(options);
   const normalizedModel = normalizeReactionModelForRender(model);
   const padY = 6;
@@ -107,7 +84,7 @@ function drawReactionLine(ctx, layout, yOffset, equationNumber, model, options =
     ctx.font = fonts.rate;
     ctx.fillStyle = "#333";
     const rateX = layout.arrowStartX + (layout.arrowEndX - layout.arrowStartX - layout.rateW) / 2;
-    ctx.fillText(layout.rateLabel, rateX, y - 12);
+    ctx.fillText(String(rate), rateX, y - 12);
   }
   drawSpeciesWithCoefficientColor(
     ctx, normalizedModel.products, layout.arrowEndX + 24, yOffset + baselineY + padY,
@@ -131,7 +108,7 @@ function drawSingleReaction(canvas, ctx, model, options = {}) {
   canvas.height = 64;
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  drawReactionLine(ctx, layout, 0, showEquationNumbers ? 1 : null, model, drawOptions);
+  drawReactionLine(ctx, layout, model.rate, 0, showEquationNumbers ? 1 : null, model, drawOptions);
 }
 
 function drawRenderableRows(canvas, ctx, rows, options = {}) {
@@ -198,6 +175,6 @@ function drawRenderableRows(canvas, ctx, rows, options = {}) {
       const leftWidth = ctx.measureText(layouts[i].left).width;
       leftXOverride = Math.max(6, layouts[i].arrowStartX - 20 - leftWidth);
     }
-    drawReactionLine(ctx, layouts[i], yOffset, equationNumber, row.model, { ...drawOptions, leftXOverride });
+    drawReactionLine(ctx, layouts[i], row.model.rate, yOffset, equationNumber, row.model, { ...drawOptions, leftXOverride });
   }
 }
