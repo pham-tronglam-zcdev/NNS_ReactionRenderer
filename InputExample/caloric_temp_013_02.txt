@@ -1,0 +1,55 @@
+
+** https://Binomial-simulation.com
+
+*Time, 
+** start,  end, console out, plot out, csv out,  unit
+       0, 10000,       1000,    10000,      100,  steps
+
+*Element
+A, 1e11, Blue, _
+B, 1e9, maroon, 4
+C, 0, Green, .
+A2, 100000, DodgerBlue, _
+B2, 10000, DarkOrange, 4
+C2, 0, Olive, .
+A3, 500000, SteelBlue, _
+B3, 50000, Peru, 4
+C3, 0, Teal, .
+A4, 1e8, orange, _
+B4, 1e6, Green, 4
+C4, 0, Blue, .
+
+
+*ElementCaloric
+CALORIC_01,  273.15e9, red, *,    unit_1e9, 2.0
+CALORIC_03, 273.15e10, orange, *, unit_1e10, 2.0
+CALORIC,   300.465e10, gold, *,   unit_1e10, 2.0
+
+*Reaction, 1e12
+r2_2, 10, 1e8, A, 1e7, B, 1e5, 1, C, 1e10, CALORIC_01
+r+-=, 30, 1, CALORIC_01, 1, CALORIC_03, =, 1, CALORIC
+
+
+*ReactionRateChange,  1000000
+
+rA,  110,  1, A2, 1, B2
+           0, 0.1, 1000, 273,  1e3, 0.1, 1000, 320, 3e3, 0.1, 1000, 350, 1e4, 0.1, 1000, 220                 
+           1, C2
+rC,  120,  1e2, A3, 1e1, B3, 1e9, CALORIC_03
+           0, 1e0, 1000, 1e-1, 10000, 1e1                    
+           1 , C3
+rT,  200, 1, A4, 1, B4
+           arrhenius, 1e-5, 10, CALORIC
+           1, C4
+
+*Plot, log
+** second item is "linear" or "log".
+A, A2, A3, A4
+B, B2, B3, B4
+C, C2, C3, C4
+
+*Plot
+CALORIC_01, CALORIC_03, CALORIC
+temp_CALORIC
+
+

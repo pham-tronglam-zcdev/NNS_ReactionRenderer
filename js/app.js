@@ -6,7 +6,6 @@ const multilineBtn = document.getElementById("multilineBtn");
 const rmBlockBtn = document.getElementById("rmBlockBtn");
 const alignArrowsBtn = document.getElementById("alignArrowsBtn");
 const stickLeftToArrowBtn = document.getElementById("stickLeftToArrowBtn");
-const specialReactionBtn = document.getElementById("specialReactionBtn");
 const commentAlignBtn = document.getElementById("commentAlignBtn");
 const colorCustomizationBtn = document.getElementById("colorCustomizationBtn");
 const devOnlyBtn = document.getElementById("devOnlyBtn");
@@ -35,16 +34,6 @@ const exportStandaloneHtmlBtn = document.getElementById("exportStandaloneHtmlBtn
 let pendingNestedFiles = [];
 let isPreviewDirty = false;
 let autoRenderTimer = null;
-
-function applySpecialExamplesToInput(enabled) {
-  const lines = inputEl.value.split(/\r?\n/);
-  const filtered = lines.filter(line => !specialCaseExampleLines.includes(line.trim()));
-  if (!enabled) { inputEl.value = filtered.join("\n"); return; }
-  const rmIndex = filtered.findIndex(line => line.trim().startsWith("rM,"));
-  if (rmIndex === -1) filtered.push(...specialCaseExampleLines);
-  else filtered.splice(rmIndex, 0, ...specialCaseExampleLines);
-  inputEl.value = filtered.join("\n");
-}
 
 function refreshLineNumbers() {
   const lineCount = Math.max(1, inputEl.value.split(/\r?\n/).length);
@@ -76,7 +65,7 @@ function render() {
     const commentColor = featureFlags.enableEquationColors ? appState.commentColor : "#666666";
     const equationNumberColor = featureFlags.enableEquationColors ? appState.equationNumberColor : "#000000";
     const rmBlockActive = featureFlags.enableRMBlockParsing && appState.rmBlockParsingEnabled;
-    const specialEdgeCasesActive = featureFlags.enableSpecialReactionEdgeCases && appState.specialReactionEdgeCasesEnabled;
+    const specialEdgeCasesActive = featureFlags.enableSpecialReactionEdgeCases;
     const pngFontStyles = featureFlags.enablePngFontSelection
       ? normalizePngFontStyles(appState.pngFontStyles)
       : createDefaultPngFontStyles();
@@ -176,18 +165,22 @@ function bindUi() {
     scheduleAutoRender();
   });
   inputEl.addEventListener("scroll", () => { lineNumbersEl.scrollTop = inputEl.scrollTop; });
-  multilineBtn.addEventListener("click", () => {
-    if (!featureFlags.enableMultilineRendering) return;
-    appState.multilineEnabled = !appState.multilineEnabled;
-    multilineBtn.textContent = `Multiline: ${appState.multilineEnabled ? "On" : "Off"}`;
-    render();
-  });
-  rmBlockBtn.addEventListener("click", () => {
-    if (!featureFlags.enableRMBlockParsing) return;
-    appState.rmBlockParsingEnabled = !appState.rmBlockParsingEnabled;
-    rmBlockBtn.textContent = `Handle rM 3-line format: ${appState.rmBlockParsingEnabled ? "On" : "Off"}`;
-    render();
-  });
+  if (multilineBtn) {
+    multilineBtn.addEventListener("click", () => {
+      if (!featureFlags.enableMultilineRendering) return;
+      appState.multilineEnabled = !appState.multilineEnabled;
+      multilineBtn.textContent = `Multiline: ${appState.multilineEnabled ? "On" : "Off"}`;
+      render();
+    });
+  }
+  if (rmBlockBtn) {
+    rmBlockBtn.addEventListener("click", () => {
+      if (!featureFlags.enableRMBlockParsing) return;
+      appState.rmBlockParsingEnabled = !appState.rmBlockParsingEnabled;
+      rmBlockBtn.textContent = `Handle rM 3-line format: ${appState.rmBlockParsingEnabled ? "On" : "Off"}`;
+      render();
+    });
+  }
   alignArrowsBtn.addEventListener("click", () => {
     appState.alignEquationArrowsEnabled = !appState.alignEquationArrowsEnabled;
     alignArrowsBtn.textContent = `Align equation arrows: ${appState.alignEquationArrowsEnabled ? "On" : "Off"}`;
@@ -201,15 +194,6 @@ function bindUi() {
     if (!appState.alignEquationArrowsEnabled) return;
     appState.stickLeftToArrowEnabled = !appState.stickLeftToArrowEnabled;
     stickLeftToArrowBtn.textContent = `Left side stick to arrow: ${appState.stickLeftToArrowEnabled ? "On" : "Off"}`;
-    setPreviewDirty(true);
-    render();
-  });
-  specialReactionBtn.addEventListener("click", () => {
-    if (!featureFlags.enableSpecialReactionEdgeCases) return;
-    appState.specialReactionEdgeCasesEnabled = !appState.specialReactionEdgeCasesEnabled;
-    specialReactionBtn.textContent = `Special reaction edge cases (not verified correctness yet): ${appState.specialReactionEdgeCasesEnabled ? "On" : "Off"}`;
-    applySpecialExamplesToInput(appState.specialReactionEdgeCasesEnabled);
-    refreshLineNumbers();
     setPreviewDirty(true);
     render();
   });
@@ -250,10 +234,12 @@ function bindUi() {
     equationNumberColorInput.value = appState.equationNumberColor;
     render();
   });
-  loadTxtBtn.addEventListener("click", () => {
-    if (!featureFlags.enableTxtImport) return;
-    txtFileInput.click();
-  });
+  if (loadTxtBtn) {
+    loadTxtBtn.addEventListener("click", () => {
+      if (!featureFlags.enableTxtImport) return;
+      txtFileInput.click();
+    });
+  }
   txtFileInput.addEventListener("change", async () => {
     try {
       errorBox.textContent = "";
@@ -445,10 +431,9 @@ function syncSidebarUiState() {
 }
 
 function applyFeatureFlagUi() {
-  if (!featureFlags.enableRMBlockParsing) rmBlockBtn.disabled = true;
+  if (rmBlockBtn && !featureFlags.enableRMBlockParsing) rmBlockBtn.disabled = true;
   if (!featureFlags.enableMultilineRendering) { alignArrowsBtn.disabled = true; stickLeftToArrowBtn.disabled = true; }
-  if (!featureFlags.enableSpecialReactionEdgeCases) specialReactionBtn.disabled = true;
-  if (!featureFlags.enableTxtImport) loadTxtBtn.disabled = true;
+  if (loadTxtBtn && !featureFlags.enableTxtImport) loadTxtBtn.disabled = true;
   if (!featureFlags.enableNestedTxtResolution) {
     loadNestedTxtBtn.disabled = true;
     confirmNestedRootBtn.disabled = true;
@@ -481,7 +466,6 @@ function syncControlLabels() {
   alignArrowsBtn.textContent = `Align equation arrows: ${appState.alignEquationArrowsEnabled ? "On" : "Off"}`;
   stickLeftToArrowBtn.disabled = !appState.alignEquationArrowsEnabled;
   stickLeftToArrowBtn.textContent = `Left side stick to arrow: ${appState.stickLeftToArrowEnabled ? "On" : "Off"}`;
-  specialReactionBtn.textContent = `Special reaction edge cases (not verified correctness yet): ${appState.specialReactionEdgeCasesEnabled ? "On" : "Off"}`;
   commentAlignBtn.textContent = `Comment align: ${appState.centerCommentLines ? "Center" : "Left"}`;
   syncSidebarUiState();
 }

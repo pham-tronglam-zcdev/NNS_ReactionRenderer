@@ -1,0 +1,312 @@
+# ============================================================================
+# NNS Reaction Rate Change Specification  v2
+# ============================================================================
+# Updated: corrected rT format, added *ElementCaloric, added r+-=,
+#          examples now match the real input file caloric_temp_013_02.txt.
+#
+# All fields are comma-separated. Whitespace around commas is ignored.
+# Lines starting with ** are comments inside NNS input files.
+# ============================================================================
+
+
+# ============================================================================
+# SECTION:  *ElementCaloric
+# ============================================================================
+#
+# Defines special heat-carrying elements used by exothermic / endothermic
+# reactions and by rT temperature-dependent reactions.
+#
+# Format:
+#   *ElementCaloric
+#   <name>, <initial_value>, <color>, <marker>, <unit_prefix>, <heat_capacity>
+#
+# Fields:
+#   name           : string, must be unique, used to reference this caloric
+#   initial_value  : float, initial caloric quantity
+#                    e.g. 273.15e9 means 273.15 * 1e9 caloric units
+#   color          : plot color string
+#   marker         : plot marker string (e.g. *)
+#   unit_prefix    : string like "unit_1e9" or "unit_1e10"
+#                    defines how many caloric units equal 1 Kelvin
+#                    e.g. unit_1e9 means 1e9 caloric units = 1 K
+#   heat_capacity  : float, heat capacity value
+#                    (used to convert caloric count to temperature)
+#
+# --- EXAMPLES (from caloric_temp_013_02.txt) ---
+#
+# *ElementCaloric
+# CALORIC_01, 273.15e9, red, *, unit_1e9, 2.0
+# CALORIC_03, 273.15e10, orange, *, unit_1e10, 2.0
+# CALORIC, 300.465e10, gold, *, unit_1e10, 2.0
+#
+# Notes:
+#   - Multiple Caloric elements can coexist.
+#   - They can be combined using r+-= reactions (see below).
+#   - rT reactions reference a specific Caloric element by name.
+#   - Internal temperature = caloric_count / unit_value / heat_capacity
+#   - Temperature is stored internally as CALORIC.temp and can be
+#     plotted via temp_CALORIC (e.g. temp_CALORIC in *Plot).
+
+
+# ============================================================================
+# SECTION:  *Reaction  (existing, for reference)
+# ============================================================================
+#
+# Standard single-line reactions.
+#
+# Format:
+#   *Reaction, <N>
+#   <type>, <sort_key>, <coeff>, <reactant>, ..., <k>, <coeff>, <product>, ...
+#
+# --- EXAMPLE: exothermic reaction (produces Caloric) ---
+#
+# *Reaction, 1e12
+# r2_2, 10, 1e8, A, 1e7, B, 1e5, 1, C, 1e10, CALORIC_01
+#
+# Meaning:
+#   type=r2_2 (2 reactants, 2 products)
+#   sort_key=10
+#   reactants: 1e8*A + 1e7*B
+#   k = 1e5
+#   products:  1*C + 1e10*CALORIC_01
+#   -> exothermic because CALORIC_01 is produced
+#
+# --- EXAMPLE: endothermic reaction (consumes Caloric) ---
+#
+# r3_1, 200, 1, A3, 1, B3, 1e9, CALORIC_03, 0.01, 1, C3
+#
+# Meaning:
+#   reactants: 1*A3 + 1*B3 + 1e9*CALORIC_03
+#   k = 0.01
+#   products:  1*C3
+#   -> endothermic because CALORIC_03 is consumed
+#
+# --- EXAMPLE: caloric transfer / combination (r+-=) ---
+#
+# r+-=, 30, 1, CALORIC_01, 1, CALORIC_03, =, 1, CALORIC
+#
+# Meaning:
+#   type=r+-= (special: caloric arithmetic)
+#   Combines CALORIC_01 and CALORIC_03 into CALORIC
+#   The "=" symbol replaces the rate constant position
+#   This is an instantaneous transfer, not a rate-governed reaction.
+
+
+# ============================================================================
+# SECTION:  *ReactionRateChange
+# ============================================================================
+#
+# Header:
+#   *ReactionRateChange, <N>
+#
+# Contains rC, rA, and rT reaction definitions.
+# All use a 3-line structure:
+#   Line 1: reactants
+#   Line 2: rate parameters (type-specific)
+#   Line 3: products
+
+
+# ============================================================================
+# TYPE 1:  rC  --  Piecewise-Linear Time-Dependent k
+# ============================================================================
+#
+# Description:
+#   Rate constant k changes over time via piecewise-linear interpolation.
+#
+# Formula:
+#   k(t) = lerp(k_i, k_{i+1}, t)
+#
+# Line 1: <TYPE>, <sort_key>, <coeff>, <species>, ...
+# Line 2: <t_0>, <k_0>, <t_1>, <k_1>, ...
+# Line 3: <coeff>, <species>, ...
+#
+# Line 2 tokens are pairs (t_i, k_i). Count must be even.
+# Between time points, k is linearly interpolated.
+#
+# --- EXAMPLE (from caloric_temp_013_02.txt) ---
+#
+# rC, 120, 1e2, A3, 1e1, B3, 1e9, CALORIC_03
+#  0, 1e0, 1000, 1e-1, 10000, 1e1
+#  1, C3
+#
+# Line 1:  type=rC, sort_key=120
+#          reactants: 100*A3 + 10*B3 + 1e9*CALORIC_03
+# Line 2:  control points:
+#          t=0      k=1.0
+#          t=1000   k=0.1
+#          t=10000  k=10.0
+# Line 3:  products: 1*C3
+#
+# Note: reactants CAN include Caloric elements (endothermic + time-varying k).
+
+
+# ============================================================================
+# TYPE 2:  rA  --  Arrhenius-Type with Time-Scheduled Parameters
+# ============================================================================
+#
+# Description:
+#   k = A * exp(-E / T) where A, E, T are all scheduled over time.
+#   Temperature is user-prescribed, NOT from simulation state.
+#
+# Formula:
+#   k(t) = A(t) * exp( -E(t) / T(t) )
+#
+# Line 1: <TYPE>, <sort_key>, <coeff>, <species>, ...
+# Line 2: <t_0>, <A_0>, <E_0>, <T_0>, <t_1>, <A_1>, <E_1>, <T_1>, ...
+# Line 3: <coeff>, <species>, ...
+#
+# Line 2 tokens are quadruplets (t, A, E, T). Count must be divisible by 4.
+# Between time points, A/E/T are linearly interpolated.
+#
+# --- EXAMPLE (from caloric_temp_013_02.txt) ---
+#
+# rA, 110, 1, A2, 1, B2
+#  0, 0.1, 1000, 273, 1e3, 0.1, 1000, 320, 3e3, 0.1, 1000, 350, 1e4, 0.1, 1000, 220
+#  1, C2
+#
+# Line 1:  type=rA, sort_key=110
+#          reactants: 1*A2 + 1*B2
+# Line 2:  four control points:
+#          t=0      A=0.1  E=1000  T=273 K
+#          t=1000   A=0.1  E=1000  T=320 K
+#          t=3000   A=0.1  E=1000  T=350 K
+#          t=10000  A=0.1  E=1000  T=220 K
+# Line 3:  products: 1*C2
+
+
+# ============================================================================
+# TYPE 3:  rT  --  Dynamic Temperature-Dependent k (from CALORIC)
+# ============================================================================
+#
+# Description:
+#   k = A * exp(-E / T) where T is read dynamically from an
+#   ElementCaloric element at each simulation step.
+#   A and E are constants.
+#
+# Formula:
+#   k = A * exp( -E / T )
+#   where T = <CALORIC_name>.temp  (live value from simulation)
+#
+# Line 1: <TYPE>, <sort_key>, <coeff>, <species>, ...
+# Line 2: arrhenius, <A>, <E>, <CALORIC_name>
+# Line 3: <coeff>, <species>, ...
+#
+# Line 2 fields:
+#   token[0] = "arrhenius"      literal keyword string
+#   token[1] = A                pre-exponential factor (float, constant)
+#   token[2] = E                activation energy (float, constant)
+#   token[3] = CALORIC_name     name of the *ElementCaloric entry to
+#                               read temperature from (string)
+#
+# --- EXAMPLE (from caloric_temp_013_02.txt) ---
+#
+# rT, 200, 1, A4, 1, B4
+#  arrhenius, 1e-5, 10, CALORIC
+#  1, C4
+#
+# Line 1:  type=rT, sort_key=200
+#          reactants: 1*A4 + 1*B4
+# Line 2:  keyword=arrhenius, A=1e-5, E=10, temperature_source=CALORIC
+# Line 3:  products: 1*C4
+#
+# At each simulation step, the program:
+#   1. Reads CALORIC.temp (current temperature in Kelvin)
+#   2. Computes k = 1e-5 * exp(-10 / T)
+#   3. Uses that k for the binomial reaction step
+
+
+# ============================================================================
+# PARSER SUMMARY
+# ============================================================================
+#
+# 1. Detect section header:
+#      *ReactionRateChange, <N>
+#
+# 2. For each reaction block (3 lines):
+#
+#    a. Line 1: split by comma, trim whitespace.
+#       token[0] = TYPE -> branch on rC / rA / rT
+#       token[1] = sort_key (integer)
+#       remaining tokens = alternating (coeff, species) pairs = reactants
+#
+#    b. Line 2: split by comma, trim whitespace.
+#
+#       If TYPE == rC:
+#           All tokens are numeric.
+#           Pairs: t_0, k_0, t_1, k_1, ...
+#           Token count must be even.
+#
+#       If TYPE == rA:
+#           All tokens are numeric.
+#           Quadruplets: t_0, A_0, E_0, T_0, ...
+#           Token count must be divisible by 4.
+#
+#       If TYPE == rT:
+#           token[0] = "arrhenius" (string keyword)
+#           token[1] = A (float)
+#           token[2] = E (float)
+#           token[3] = CALORIC element name (string)
+#           Token count is exactly 4.
+#
+#    c. Line 3: split by comma, trim whitespace.
+#       Alternating (coeff, species) pairs = products.
+#
+# 3. Repeat until next *Section header or end of file.
+
+
+# ============================================================================
+# FULL EXAMPLE INPUT FILE (caloric_temp_013_02.txt)
+# ============================================================================
+#
+# ** https://Binomial-simulation.com
+# *Time,
+# ** start, end, console out, plot out, csv out, unit
+#  0, 10000, 1000, 10000, 100, steps
+#
+# *Element
+# A, 1e11, Blue, _
+# B, 1e9, maroon, 4
+# C, 0, Green, .
+# A2, 100000, DodgerBlue, _
+# B2, 10000, DarkOrange, 4
+# C2, 0, Olive, .
+# A3, 500000, SteelBlue, _
+# B3, 50000, Peru, 4
+# C3, 0, Teal, .
+# A4, 1e8, orange, _
+# B4, 1e6, Green, 4
+# C4, 0, Blue, .
+#
+# *ElementCaloric
+# CALORIC_01, 273.15e9, red, *, unit_1e9, 2.0
+# CALORIC_03, 273.15e10, orange, *, unit_1e10, 2.0
+# CALORIC, 300.465e10, gold, *, unit_1e10, 2.0
+#
+# *Reaction, 1e12
+# r2_2, 10, 1e8, A, 1e7, B, 1e5, 1, C, 1e10, CALORIC_01
+# r+-=, 30, 1, CALORIC_01, 1, CALORIC_03, =, 1, CALORIC
+#
+# *ReactionRateChange, 1000000
+# rA, 110, 1, A2, 1, B2
+#  0, 0.1, 1000, 273, 1e3, 0.1, 1000, 320, 3e3, 0.1, 1000, 350, 1e4, 0.1, 1000, 220
+#  1, C2
+# rC, 120, 1e2, A3, 1e1, B3, 1e9, CALORIC_03
+#  0, 1e0, 1000, 1e-1, 10000, 1e1
+#  1, C3
+# rT, 200, 1, A4, 1, B4
+#  arrhenius, 1e-5, 10, CALORIC
+#  1, C4
+#
+# *Plot, log
+# ** second item is "linear" or "log".
+# A, A2, A3, A4
+# B, B2, B3, B4
+# C, C2, C3, C4
+# *Plot
+# CALORIC_01, CALORIC_03, CALORIC
+# temp_CALORIC
+
+
+# ============================================================================
+# END OF SPEC v2
+# ============================================================================
